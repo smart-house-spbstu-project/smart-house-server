@@ -2,7 +2,6 @@ package com.gopea.smart_house_server.routers;
 
 import com.gopea.smart_house_server.configs.RoutConfiguration;
 import com.gopea.smart_house_server.configs.StatusCode;
-import com.gopea.smart_house_server.data_base.Storages;
 import com.gopea.smart_house_server.devices.BaseDevice;
 import com.gopea.smart_house_server.devices.Device;
 import com.gopea.smart_house_server.devices.DeviceType;
@@ -20,6 +19,9 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 
+import static com.gopea.smart_house_server.common.Helpers.BASE_BAD_REQUEST_MESSAGE;
+import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
+import static com.gopea.smart_house_server.common.Helpers.handleEmptyCase;
 import static com.gopea.smart_house_server.data_base.Storages.ID;
 import static com.gopea.smart_house_server.common.Helpers.MESSAGE_KEY;
 import static com.gopea.smart_house_server.common.Helpers.checkAdminRights;
@@ -77,6 +79,36 @@ public class DeviceRouter implements Routable {
           .subscribe();
     });
 
+    router.route(HttpMethod.POST, PATH + "/:id/execute").handler(ctx -> {
+      String id = ctx.request().getParam(ID);
+      if (StringUtils.isBlank(id)) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, BASE_BAD_REQUEST_MESSAGE);
+        return;
+      }
+      JsonObject body = getBody(ctx);
+      if (body == null || body.isEmpty()) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, "Body are required for this request");
+        return;
+      }
+      DEVICE_STORAGE.getDevice(id)
+          .switchIfEmpty(handleEmptyCase(ctx))
+          .flatMapCompletable(device ->
+              device.execute(body)
+                  .flatMapCompletable(response -> {
+                    if (!isInternalStatusOk(response)) {
+                      makeErrorResponse(ctx, response);
+                    }
+                    //TODO: output data from device
+                    makeRestResponseFromResponse(ctx, response);
+                    return Completable.complete();
+                  }))
+          .doOnError(err -> handleError(ctx, err))
+          .subscribe();
+      ctx.response().end();
+    });
+
+    router.route(HttpMethod.GET, PATH + "/:id").handler(ctx -> {});
+
     router.route(HttpMethod.GET, PATH).handler(ctx -> {
       String deviceTypeParam = ctx.request().getParam(DEVICE_TYPE_KEY);
       String id = ctx.request().getParam(ID);
@@ -110,22 +142,68 @@ public class DeviceRouter implements Routable {
           .doOnError(err -> handleError(ctx, err))
           .subscribe();
     });
+
     router.route(HttpMethod.PATCH, PATH + "/:id").handler(ctx -> {
 
+      if (!checkAdminRights(ctx)) {
+        return;
+      }
+      String id = ctx.request().getParam(ID);
+      if (StringUtils.isBlank(id)) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, BASE_BAD_REQUEST_MESSAGE);
+        return;
+      }
+      JsonObject body = getBody(ctx);
+      if (body == null || body.isEmpty()) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, "Body are required for this request");
+        return;
+      }
+      JsonObject deviceProperty = body.getJsonObject(DEVICE_PROPERTIES_KEY);
+      if (deviceProperty == null) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, String.format("%s is required field", DEVICE_PROPERTIES_KEY));
+        return;
+      }
+      DEVICE_STORAGE.getDevice(id)
+          .switchIfEmpty(handleEmptyCase(ctx))
+          .flatMapCompletable(device ->
+              device.update(deviceProperty)
+                  .flatMapCompletable(response -> {
+                    if (!isInternalStatusOk(response)) {
+                      makeErrorResponse(ctx, response);
+                    }
+                    ctx.response().setStatusCode(StatusCode.SUCCESS.getStatusCode());
+                    ctx.response().end();
+                    return Completable.complete();
+                  }))
+          .doOnError(err -> handleError(ctx, err))
+          .subscribe();
     });
 
-    router.route(HttpMethod.DELETE, PATH).handler(ctx -> {});
+    router.route(HttpMethod.DELETE, PATH + "/:id").handler(ctx -> {
+      String id = ctx.request().getParam("id");
+      if (StringUtils.isBlank(id)) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, "id param couldn't be blank");
+        return;
+      }
+
+      DEVICE_STORAGE.deleteDevice(id)
+          .flatMapCompletable(response -> {
+            if (isInternalStatusOk(response)) {
+              makeRestResponseFromResponse(ctx, response);
+            } else {
+              makeErrorResponse(ctx, response);
+            }
+            return Completable.complete();
+          })
+          .doOnError(error -> handleError(ctx, error))
+          .subscribe();
+    });
     return router;
   }
 
   private boolean checkBody(JsonObject body, RoutingContext context) {
-    if (body == null) {
-      context.response().setStatusCode(StatusCode.BAD_REQUEST.getStatusCode());
-      context.response().end(Buffer.newInstance(
-          new JsonObject()
-              .put(MESSAGE_KEY, "Body are required for this request")
-              .toBuffer()
-      ));
+    if (body == null || body.isEmpty()) {
+      makeErrorRestResponse(context, StatusCode.BAD_REQUEST, "Body are required for this request");
       return false;
     }
     String deviceType = body.getString(DEVICE_TYPE_KEY);

@@ -8,6 +8,8 @@ import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
 
 public class BaseDeviceConnector extends Connector {
 
+
+
   public BaseDeviceConnector(String host, int port) {
 
   }

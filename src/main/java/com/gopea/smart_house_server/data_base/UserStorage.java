@@ -2,10 +2,12 @@ package com.gopea.smart_house_server.data_base;
 
 import com.gopea.smart_house_server.routers.users.User;
 import com.gopea.smart_house_server.routers.users.UserType;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserStorage {
 
@@ -23,6 +25,6 @@ public interface UserStorage {
 
   Single<List<User>> getUsers();
 
-  Single<User> getUser(String username);
+  Maybe<User> getUser(String username);
 
 }

@@ -17,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
+import static com.gopea.smart_house_server.common.Helpers.handleEmptyCase;
 import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 import static com.gopea.smart_house_server.configs.StandardCredentials.ADMIN;
 import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
@@ -124,7 +125,8 @@ public class UserRouter implements Routable {
       String password = body.getString(PASSWORD_KEY);
       if (StringUtils.isNotEmpty(password)) {
         Storages.USER_STORAGE.getUser(username)
-            .map(user -> user.setPassword(password))
+            .switchIfEmpty(handleEmptyCase(routingContext))
+            .flatMapSingle(user -> Single.just(user.setPassword(password)))
             .flatMap(Storages.USER_STORAGE::updatePassword)
             .flatMapCompletable(response -> {
               if (!isInternalStatusOk(response)) {
@@ -152,7 +154,7 @@ public class UserRouter implements Routable {
       }
       Storages.USER_STORAGE.deleteUser(username)
           .flatMapCompletable(response -> {
-            if (InternalStatus.valueOf(response.getString(INTERNAL_STATUS_KEY)).isOk) {
+            if (isInternalStatusOk(response)) {
               routingContext.response().setStatusCode(StatusCode.NO_CONTENT.getStatusCode());
               routingContext.response().end();
             } else {

@@ -3,14 +3,18 @@ package com.gopea.smart_house_server.common;
 
 import com.gopea.smart_house_server.configs.StatusCode;
 import com.gopea.smart_house_server.routers.users.UserType;
+import io.reactivex.Maybe;
+import io.reactivex.MaybeSource;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.apache.commons.lang3.StringUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Helpers {
+
 
   public static final String USER_TYPE_HEADER = "User-Type";
   public static final String USERNAME_HEADER = "Username";
@@ -18,6 +22,7 @@ public class Helpers {
   public static final String INTERNAL_STATUS_KEY = "status";
   public static final String EXTERNAL_STATUS_KEY = "rest_status";
   public static final String MESSAGE_KEY = "message";
+  public static final String BASE_BAD_REQUEST_MESSAGE = "Bad request";
 
   public static byte[] encryptPassword(String password) {
     MessageDigest messageDigest = null;
@@ -38,15 +43,23 @@ public class Helpers {
   }
 
   public static void makeErrorResponse(RoutingContext context, JsonObject internalResponse) {
-    if (!InternalStatus.valueOf(internalResponse.getString(INTERNAL_STATUS_KEY)).isOk) {
+    if (!isInternalStatusOk(internalResponse)) {
+      Integer statusCode = internalResponse.getInteger(EXTERNAL_STATUS_KEY);
+      if (statusCode == null) {
+        statusCode = StatusCode.ERROR.getStatusCode();
+      }
       JsonObject message = new JsonObject()
           .put(MESSAGE_KEY, internalResponse.getString(MESSAGE_KEY));
-      makeRestResponse(context, internalResponse.getInteger(EXTERNAL_STATUS_KEY), message);
+      makeRestResponse(context, statusCode, message);
     }
   }
 
   public static void makeRestResponseFromResponse(RoutingContext context, JsonObject response, JsonObject message) {
     makeRestResponse(context, response.getInteger(EXTERNAL_STATUS_KEY), message);
+  }
+
+  public static void makeRestResponseFromResponse(RoutingContext context, JsonObject response) {
+    makeRestResponse(context, response.getInteger(EXTERNAL_STATUS_KEY), null);
   }
 
   public static void makeErrorRestResponse(RoutingContext context, StatusCode code, Object message) {
@@ -73,15 +86,25 @@ public class Helpers {
     return null;
   }
 
+  public static <T> MaybeSource<T> handleEmptyCase(RoutingContext context) {
+    makeErrorRestResponse(context, StatusCode.NOT_FOUND, "Element not found");
+    return Maybe.empty();
+  }
+
   public static boolean isInternalStatusOk(JsonObject response) {
     return InternalStatus.valueOf(response.getString(INTERNAL_STATUS_KEY)).isOk;
   }
 
   private static void makeRestResponse(RoutingContext context, int code, JsonObject message) {
     context.response().setStatusCode(code);
-    context.response().end(
-        Buffer.newInstance(message.toBuffer()));
+    if (message != null) {
+      context.response().end(
+          Buffer.newInstance(message.toBuffer()));
+    } else {
+      context.response().end();
+    }
   }
+
 
   private Helpers() {
 

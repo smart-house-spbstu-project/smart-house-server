@@ -6,6 +6,7 @@ import com.gopea.smart_house_server.routers.users.User;
 import com.gopea.smart_house_server.routers.users.UserType;
 
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.Vertx;
@@ -15,6 +16,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
@@ -145,14 +147,16 @@ public class FileUserStorage implements UserStorage {
   }
 
   @Override
-  public Single<User> getUser(String username) {
+  public Maybe<User> getUser(String username) {
     return readFile()
-        .map(json -> {
+        .flatMapMaybe(json -> {
           JsonObject user = json.getJsonObject(USERS_KEY).getJsonObject(username);
           if (user == null) {
-            return null;
+            return Maybe.empty();
           }
-          return new User(username, UserType.valueOf(user.getString(USER_TYPE_KEY).toUpperCase()), user.getBinary(PASSWORD_KEY));
+          return Maybe.just(new User(username,
+              UserType.valueOf(user.getString(USER_TYPE_KEY).toUpperCase()),
+              user.getBinary(PASSWORD_KEY)));
         });
   }
 

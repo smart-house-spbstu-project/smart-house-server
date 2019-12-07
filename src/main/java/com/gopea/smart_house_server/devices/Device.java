@@ -14,7 +14,9 @@ public interface Device extends Connectible {
 
   Single<JsonObject> getStatus();
 
-  <T extends Command> Single<JsonObject> execute(T command);
+  Single<JsonObject> execute(JsonObject command);
 
   JsonObject toJson();
+
+  Single<JsonObject> update(JsonObject object);
 }
