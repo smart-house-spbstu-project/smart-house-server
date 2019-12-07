@@ -1,4 +1,4 @@
-package com.gopea.smart_house_server.data_base;
+package com.gopea.smart_house_server.common;
 
 public enum InternalStatus {
   OK(true, "OK"),

@@ -10,7 +10,8 @@ public enum StatusCode {
   NOT_FOUND(404),
   FORBIDDEN(403),
   ERROR(500),
-  UNAUTHORISED(401);
+  UNAUTHORISED(401),
+  UNADDRESSABLE_ENTITY(422);
 
   private final int statusCode;
 

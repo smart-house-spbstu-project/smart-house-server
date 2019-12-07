@@ -6,7 +6,10 @@ public enum UserType {
   ADMIN,
   USER;
 
-  public static UserType getUserType(@NotNull String name) {
+  public static UserType getEnum(String name) {
+    if (name == null) {
+      return null;
+    }
     name = name.toUpperCase();
     UserType userType = null;
     try {

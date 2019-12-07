@@ -1,0 +1,89 @@
+package com.gopea.smart_house_server.common;
+
+
+import com.gopea.smart_house_server.configs.StatusCode;
+import com.gopea.smart_house_server.routers.users.UserType;
+import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.core.buffer.Buffer;
+import io.vertx.reactivex.ext.web.RoutingContext;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+public class Helpers {
+
+  public static final String USER_TYPE_HEADER = "User-Type";
+  public static final String USERNAME_HEADER = "Username";
+  public static final String PASSWORDS_FILE = "passwords.json";
+  public static final String INTERNAL_STATUS_KEY = "status";
+  public static final String EXTERNAL_STATUS_KEY = "rest_status";
+  public static final String MESSAGE_KEY = "message";
+
+  public static byte[] encryptPassword(String password) {
+    MessageDigest messageDigest = null;
+    try {
+      messageDigest = MessageDigest.getInstance("SHA-256");
+      messageDigest.update(password.getBytes());
+      return messageDigest.digest();
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public static void handleError(RoutingContext context, Throwable error) {
+    System.out.println(error.getMessage());
+    error.printStackTrace();
+    context.fail(StatusCode.ERROR.getStatusCode(), error);
+  }
+
+  public static void makeErrorResponse(RoutingContext context, JsonObject internalResponse) {
+    if (!InternalStatus.valueOf(internalResponse.getString(INTERNAL_STATUS_KEY)).isOk) {
+      JsonObject message = new JsonObject()
+          .put(MESSAGE_KEY, internalResponse.getString(MESSAGE_KEY));
+      makeRestResponse(context, internalResponse.getInteger(EXTERNAL_STATUS_KEY), message);
+    }
+  }
+
+  public static void makeRestResponseFromResponse(RoutingContext context, JsonObject response, JsonObject message) {
+    makeRestResponse(context, response.getInteger(EXTERNAL_STATUS_KEY), message);
+  }
+
+  public static void makeErrorRestResponse(RoutingContext context, StatusCode code, Object message) {
+    JsonObject messageObj = new JsonObject()
+        .put(MESSAGE_KEY, message);
+    makeRestResponse(context, code.getStatusCode(), messageObj);
+  }
+
+  public static boolean checkAdminRights(RoutingContext routingContext) {
+    if (!UserType.getEnum(routingContext.request().getHeader(USER_TYPE_HEADER)).equals(UserType.ADMIN)) {
+      routingContext.fail(StatusCode.FORBIDDEN.getStatusCode());
+      return false;
+    }
+    return true;
+  }
+
+  public static JsonObject getBody(RoutingContext routingContext) {
+    try {
+      return routingContext.getBodyAsJson();
+    } catch (Exception e) {
+      System.out.println(e.getMessage());
+      routingContext.fail(StatusCode.BAD_REQUEST.getStatusCode(), e);
+    }
+    return null;
+  }
+
+  public static boolean isInternalStatusOk(JsonObject response) {
+    return InternalStatus.valueOf(response.getString(INTERNAL_STATUS_KEY)).isOk;
+  }
+
+  private static void makeRestResponse(RoutingContext context, int code, JsonObject message) {
+    context.response().setStatusCode(code);
+    context.response().end(
+        Buffer.newInstance(message.toBuffer()));
+  }
+
+  private Helpers() {
+
+  }
+}

@@ -1,10 +1,8 @@
 package com.gopea.smart_house_server.routers.users;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.Arrays;
 
-import static com.gopea.smart_house_server.helpers.Helpers.encryptPassword;
+import static com.gopea.smart_house_server.common.Helpers.encryptPassword;
 
 public class User {
   private final UserType userType;

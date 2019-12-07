@@ -1,7 +1,7 @@
 package com.gopea.smart_house_server.routers;
 
 import com.gopea.smart_house_server.configs.StatusCode;
-import com.gopea.smart_house_server.routers.users.Users;
+import com.gopea.smart_house_server.data_base.Storages;
 import io.reactivex.Completable;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
@@ -10,8 +10,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import static com.gopea.smart_house_server.helpers.Helpers.USERNAME_HEADER;
-import static com.gopea.smart_house_server.helpers.Helpers.USER_TYPE_HEADER;
+import static com.gopea.smart_house_server.common.Helpers.USERNAME_HEADER;
+import static com.gopea.smart_house_server.common.Helpers.USER_TYPE_HEADER;
+import static com.gopea.smart_house_server.common.Helpers.handleError;
 
 
 public class AuthRouter implements Routable {
@@ -25,9 +26,10 @@ public class AuthRouter implements Routable {
       Pair<String, String> credentials = getCredentials(authHeader);
       if (credentials == null) {
         context.fail(StatusCode.UNAUTHORISED.getStatusCode());
+        return;
       }
 
-      Users.USER_STORAGE.getUser(credentials.getLeft())
+      Storages.USER_STORAGE.getUser(credentials.getLeft())
           .flatMapCompletable(user1 -> {
             if (user1 == null || !user1.checkPassword(credentials.getRight())) {
               context.fail(StatusCode.UNAUTHORISED.getStatusCode());
@@ -35,8 +37,13 @@ public class AuthRouter implements Routable {
             context.request().headers().add(USERNAME_HEADER, user1.getUsername());
             context.request().headers().add(USER_TYPE_HEADER, user1.getUserType().toString().toLowerCase());
             return Completable.complete();
-          })
-          .subscribe(context::next, context::fail);
+          }).doOnError(error -> handleError(context, error))
+          .subscribe(() -> {
+            if (context.failed()) {
+              return;
+            }
+            context.next();
+          });
 
     });
     return router;

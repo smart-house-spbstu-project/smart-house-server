@@ -7,7 +7,6 @@ import io.vertx.reactivex.ext.web.Router;
 
 import static com.gopea.smart_house_server.configs.InitConfigs.HTTP_PORT;
 import static com.gopea.smart_house_server.configs.InitConfigs.setupInitConfig;
-import static com.gopea.smart_house_server.helpers.Helpers.encryptPassword;
 
 
 public class MainVerticle extends AbstractVerticle {
@@ -24,6 +23,4 @@ public class MainVerticle extends AbstractVerticle {
             .rxListen(HTTP_PORT))
         .subscribe(httpServer -> startFuture.complete(), startFuture::fail);
   }
-
-
 }

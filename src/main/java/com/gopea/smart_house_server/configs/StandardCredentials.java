@@ -3,7 +3,7 @@ package com.gopea.smart_house_server.configs;
 import com.gopea.smart_house_server.routers.users.User;
 import com.gopea.smart_house_server.routers.users.UserType;
 
-import static com.gopea.smart_house_server.helpers.Helpers.encryptPassword;
+import static com.gopea.smart_house_server.common.Helpers.encryptPassword;
 
 
 public final class StandardCredentials {

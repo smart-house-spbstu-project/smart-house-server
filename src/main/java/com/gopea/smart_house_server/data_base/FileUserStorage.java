@@ -1,5 +1,6 @@
 package com.gopea.smart_house_server.data_base;
 
+import com.gopea.smart_house_server.common.InternalStatus;
 import com.gopea.smart_house_server.configs.StatusCode;
 import com.gopea.smart_house_server.routers.users.User;
 import com.gopea.smart_house_server.routers.users.UserType;
@@ -12,13 +13,12 @@ import io.vertx.reactivex.core.buffer.Buffer;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.gopea.smart_house_server.helpers.Helpers.EXTERNAL_STATUS_KEY;
-import static com.gopea.smart_house_server.helpers.Helpers.INTERNAL_STATUS_KEY;
-import static com.gopea.smart_house_server.helpers.Helpers.MESSAGE_KEY;
+import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
+import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
+import static com.gopea.smart_house_server.common.Helpers.MESSAGE_KEY;
 
 
 public class FileUserStorage implements UserStorage {
@@ -53,8 +53,9 @@ public class FileUserStorage implements UserStorage {
                     .put(MESSAGE_KEY, "User doesn't exists")
                     .put(EXTERNAL_STATUS_KEY, StatusCode.NOT_FOUND.getStatusCode()));
           }
+          userData.put(PASSWORD_KEY, user.getPassword());
           return vertx.fileSystem().rxWriteFile(filePath,
-              Buffer.newInstance(userData.put(PASSWORD_KEY, user.getPassword()).toBuffer()))
+              Buffer.newInstance(json.toBuffer()))
               .andThen(Single.just(new JsonObject()
                   .put(INTERNAL_STATUS_KEY, InternalStatus.OK)
                   .put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode()))
@@ -83,7 +84,8 @@ public class FileUserStorage implements UserStorage {
           return vertx.fileSystem().rxWriteFile(filePath, Buffer.newInstance(json.toBuffer()))
               .andThen(Single.just(new JsonObject()
                   .put(INTERNAL_STATUS_KEY, InternalStatus.OK)
-                  .put(EXTERNAL_STATUS_KEY, StatusCode.CREATED.getStatusCode())));
+                  .put(EXTERNAL_STATUS_KEY, StatusCode.CREATED.getStatusCode())
+                  .put(Storages.ID, user.getUsername())));
         });
   }
 
@@ -157,7 +159,7 @@ public class FileUserStorage implements UserStorage {
   private Single<JsonObject> readFile() {
     return vertx.fileSystem().rxProps(filePath)
         .flatMap(fileProps -> {
-          if (file == null || file.getRight()<fileProps.lastModifiedTime()) {
+          if (file == null || file.getRight() < fileProps.lastModifiedTime()) {
             System.out.println("Read users file");
             return vertx.fileSystem().rxReadFile(filePath)
                 .map(Buffer::toJsonObject)
