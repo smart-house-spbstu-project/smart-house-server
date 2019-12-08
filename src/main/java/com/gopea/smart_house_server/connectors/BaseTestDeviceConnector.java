@@ -73,16 +73,18 @@ public class BaseTestDeviceConnector extends Connector {
 
   @Override
   public Single<JsonObject> connect() {
+
     JsonObject object = example.getResponse(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.CONNECT.toString().toLowerCase()));
     ConnectionState connectionState = getEnum(object.getString(COMMAND_ACTION_KEY), ConnectionState.class);
     if (connectionState == null || connectionState.equals(ConnectionState.DISCONNECTED)) {
+
       return Single.just(
           new JsonObject()
               .put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
               .mergeIn(object)
       );
     }
-    object.remove(COMMAND_ACTION_KEY);
+
     isConnected = true;
     return Single.just(
         new JsonObject()
@@ -94,6 +96,14 @@ public class BaseTestDeviceConnector extends Connector {
   @Override
   public Single<JsonObject> disconnect() {
     JsonObject response = example.getResponse(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.DISCONNECT.toString().toLowerCase()));
+    ConnectionState connectionState = getEnum(response.getString(COMMAND_ACTION_KEY), ConnectionState.class);
+    if (connectionState == null || connectionState.equals(ConnectionState.CONNECTED)) {
+      return Single.just(
+          new JsonObject()
+              .put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
+              .mergeIn(response)
+      );
+    }
     isConnected = false;
     return Single.just(
         new JsonObject()

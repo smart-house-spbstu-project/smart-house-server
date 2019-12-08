@@ -2,6 +2,7 @@ package com.gopea.smart_house_server.devices;
 
 import com.gopea.smart_house_server.connectors.Connectible;
 import io.reactivex.Single;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public interface Device extends Connectible {
@@ -19,4 +20,6 @@ public interface Device extends Connectible {
   JsonObject toJson();
 
   Single<JsonObject> update(JsonObject object);
+
+  Single<JsonArray> getMetrics();
 }

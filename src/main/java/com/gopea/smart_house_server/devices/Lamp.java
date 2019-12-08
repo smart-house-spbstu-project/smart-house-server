@@ -32,7 +32,7 @@ public class Lamp extends BaseDevice {
     return connector.sendMessage(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.POWER_OFF))
         .flatMap(response -> {
           if (isInternalStatusOk(response)) {
-            return connector.disconnect();
+            return disconnect();
           }
           return Single.just(response);
         });
@@ -40,7 +40,19 @@ public class Lamp extends BaseDevice {
 
   @Override
   public Single<JsonObject> reboot() {
-    return null;
+    return connector.sendMessage(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.REBOOT))
+        .flatMap(response -> {
+          if (isInternalStatusOk(response)) {
+            return disconnect()
+                .flatMap(response1->{
+                  if (isInternalStatusOk(response1)){
+                    return connect();
+                  }
+                  return Single.just(response1);
+                });
+          }
+          return Single.just(response);
+        });
   }
 
   @Override

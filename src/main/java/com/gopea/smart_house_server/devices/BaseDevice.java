@@ -123,6 +123,11 @@ public abstract class BaseDevice implements Device {
     return executeCommand(command);
   }
 
+  @Override
+  public Single<JsonArray> getMetrics() {
+    return Single.just(metrics);
+  }
+
   protected abstract Single<JsonObject> executeCommand(JsonObject command);
 
   protected abstract JsonObject validateCommand(JsonObject command);

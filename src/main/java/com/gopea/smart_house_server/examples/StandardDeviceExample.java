@@ -79,6 +79,9 @@ public class StandardDeviceExample {
           .put(INTERNAL_STATUS_KEY, InternalStatus.OK)
           .put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode())
           .put(COMMAND_ACTION_KEY, action.toString().toLowerCase());
+      if (action.equals(DeviceAction.CONNECT) || action.equals(DeviceAction.DISCONNECT)) {
+        message.put(COMMAND_ACTION_KEY, action.toString().toLowerCase() + "ed"); //TODO: fix it in the future
+      }
     }
 
     outputStream.println(message);

@@ -7,6 +7,8 @@ import com.gopea.smart_house_server.devices.Device;
 import com.gopea.smart_house_server.devices.DeviceType;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -40,6 +42,7 @@ public class DeviceRouter implements Routable {
   @Override
   public Router loadRouter(Vertx vertx) {
     Router router = Router.router(vertx);
+
     router.route(HttpMethod.POST, PATH).handler(ctx -> {
       if (!checkAdminRights(ctx)) {
         return;
@@ -89,24 +92,11 @@ public class DeviceRouter implements Routable {
         makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, "Body are required for this request");
         return;
       }
-      DEVICE_STORAGE.getDevice(id)
-          .switchIfEmpty(handleEmptyCase(ctx, DEVICE_STORAGE.getDevice(id)))
-          .flatMapCompletable(device ->
-              device.execute(body)
-                  .flatMapCompletable(response -> {
-                    if (!isInternalStatusOk(response)) {
-                      makeErrorResponse(ctx, response);
-                      return Completable.complete();
-                    }
-                    makeRestResponseFromResponse(ctx, response);
-                    return Completable.complete();
-                  }))
-          .doOnError(err -> handleError(ctx, err))
-          .subscribe();
+      handleDeviceActionWithId(ctx, id, device -> device.execute(body));
     });
 
     router.route(HttpMethod.POST, PATH + "/:id/power_off").handler(ctx -> {
-      if (!checkAdminRights(ctx)){
+      if (!checkAdminRights(ctx)) {
         return;
       }
       String id = ctx.request().getParam(ID);
@@ -114,25 +104,45 @@ public class DeviceRouter implements Routable {
         makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, BASE_BAD_REQUEST_MESSAGE);
         return;
       }
-      DEVICE_STORAGE.getDevice(id)
-          .switchIfEmpty(handleEmptyCase(ctx, DEVICE_STORAGE.getDevice(id)))
-          .flatMapCompletable(device ->
-              device.powerOff()
-                  .flatMapCompletable(response -> {
-                    if (!isInternalStatusOk(response)) {
-                      makeErrorResponse(ctx, response);
-                      return Completable.complete();
-                    }
-                    makeRestResponseFromResponse(ctx, response);
-                    return Completable.complete();
-                  }))
-          .doOnError(err -> handleError(ctx, err))
-          .subscribe();
+      handleDeviceActionWithId(ctx, id, Device::powerOff);
     });
 
-    router.route(HttpMethod.POST, PATH + "/:id/reboot").handler(ctx -> {});
+    router.route(HttpMethod.POST, PATH + "/:id/reboot").handler(ctx -> {
+      if (!checkAdminRights(ctx)) {
+        return;
+      }
+      String id = ctx.request().getParam(ID);
+      if (StringUtils.isBlank(id)) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, BASE_BAD_REQUEST_MESSAGE);
+        return;
+      }
+      handleDeviceActionWithId(ctx, id, Device::reboot);
+    });
 
-    router.route(HttpMethod.POST, PATH + "/:id/disconnect").handler(ctx -> {});
+    router.route(HttpMethod.POST, PATH + "/:id/disconnect").handler(ctx -> {
+      if (!checkAdminRights(ctx)) {
+        return;
+      }
+      String id = ctx.request().getParam(ID);
+      if (StringUtils.isBlank(id)) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, BASE_BAD_REQUEST_MESSAGE);
+        return;
+      }
+      handleDeviceActionWithId(ctx, id, Device::disconnect);
+    });
+
+    router.route(HttpMethod.POST, PATH + "/:id/connect").handler(ctx -> {
+      if (!checkAdminRights(ctx)) {
+        return;
+      }
+      String id = ctx.request().getParam(ID);
+      if (StringUtils.isBlank(id)) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, BASE_BAD_REQUEST_MESSAGE);
+        return;
+      }
+      handleDeviceActionWithId(ctx, id, Device::connect);
+    });
+
 
     router.route(HttpMethod.GET, PATH + "/:id").handler(ctx -> {
 
@@ -263,6 +273,28 @@ public class DeviceRouter implements Routable {
 
 
     return true;
+  }
+
+  private void handleDeviceActionWithId(RoutingContext context, String id, DeviceRollback rollback) {
+    DEVICE_STORAGE.getDevice(id)
+        .switchIfEmpty(handleEmptyCase(context, DEVICE_STORAGE.getDevice(id)))
+        .flatMapCompletable(device ->
+            rollback.execute(device)
+                .flatMapCompletable(response -> {
+                  if (!isInternalStatusOk(response)) {
+                    makeErrorResponse(context, response);
+                    return Completable.complete();
+                  }
+                  makeRestResponseFromResponse(context, response);
+                  return Completable.complete();
+                }))
+        .doOnError(err -> handleError(context, err))
+        .subscribe();
+  }
+
+  @FunctionalInterface
+  private interface DeviceRollback {
+    Single<JsonObject> execute(Device device);
   }
 }
 
