@@ -10,6 +10,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.Vertx;
@@ -153,11 +154,12 @@ public class DeviceRouter implements Routable {
       handleDeviceActionWithId(ctx, id, device -> device
           .getData()
           .flatMap(response -> {
-            if(isInternalStatusOk(response)) {
+            if (isInternalStatusOk(response)) {
               return device.getStatus()
                   .map(response1 -> {
                     if (isInternalStatusOk(response1)) {
-                      return response.mergeIn(response1);
+                      JsonObject object = response.copy();
+                      return object.mergeIn(response1);
                     }
                     return response1;
                   });
@@ -168,8 +170,23 @@ public class DeviceRouter implements Routable {
 
     });
 
-    router.route(HttpMethod.GET, PATH + "/:id/generate_metrics").handler(ctx -> {
-
+    router.route(HttpMethod.GET, PATH + "/:id/metrics").handler(ctx -> {
+      String id = ctx.request().getParam(ID);
+      if (StringUtils.isBlank(id)) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, BASE_BAD_REQUEST_MESSAGE);
+        return;
+      }
+      DEVICE_STORAGE.getDevice(id)
+          .switchIfEmpty(handleEmptyCase(ctx, DEVICE_STORAGE.getDevice(id)))
+          .flatMapCompletable(device ->
+              device.getMetrics()
+                  .flatMapCompletable(response -> {
+                    ctx.response().setStatusCode(StatusCode.SUCCESS.getStatusCode());
+                    ctx.response().end(Buffer.newInstance(response.toBuffer()));
+                    return Completable.complete();
+                  }))
+          .doOnError(err -> handleError(ctx, err))
+          .subscribe();
     });
 
     router.route(HttpMethod.GET, PATH).handler(ctx -> {

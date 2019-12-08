@@ -10,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.lang.reflect.Constructor;
 
+import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 
@@ -132,7 +133,12 @@ public abstract class BaseDevice implements Device {
   public Single<JsonObject> getData() {
     return getDeviceData()
         .doOnSuccess(data -> {
-          metrics.add(data);
+          if (isInternalStatusOk(data)) {
+            JsonObject metric = data.copy();
+            metric.remove(INTERNAL_STATUS_KEY);
+            metric.remove(EXTERNAL_STATUS_KEY);
+            metrics.add(metric);
+          }
         });
   }
 
