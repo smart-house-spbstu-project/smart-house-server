@@ -2,12 +2,11 @@ package com.gopea.smart_house_server.examples;
 
 import com.gopea.smart_house_server.common.InternalStatus;
 import com.gopea.smart_house_server.configs.StatusCode;
-import com.gopea.smart_house_server.connectors.Actions;
+import com.gopea.smart_house_server.devices.DeviceAction;
 import com.gopea.smart_house_server.connectors.BaseTestDeviceConnector;
 import com.gopea.smart_house_server.devices.DeviceType;
 import io.vertx.core.json.JsonObject;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -15,8 +14,8 @@ import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.MESSAGE_KEY;
 import static com.gopea.smart_house_server.common.Helpers.getEnum;
-import static com.gopea.smart_house_server.connectors.BaseTestDeviceConnector.CONNECTION_STATE_KEY;
-import static com.gopea.smart_house_server.connectors.Connectors.ACTION_KEY;
+import static com.gopea.smart_house_server.connectors.Connectors.COMMAND_ACTION_KEY;
+
 
 public class StandardDeviceExample {
 
@@ -57,9 +56,12 @@ public class StandardDeviceExample {
 
   public JsonObject getResponse(JsonObject command) {
 
-    Actions action = getEnum(command.getString(ACTION_KEY), Actions.class);
+    DeviceAction action = getEnum(command.getString(COMMAND_ACTION_KEY), DeviceAction.class);
     State state = getEnum(command.getString(STATE_KEY), State.class);
-    JsonObject message = new JsonObject();
+    JsonObject message = new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
+        .put(EXTERNAL_STATUS_KEY, StatusCode.UNPROCESSABLE_ENTITY.getStatusCode())
+        .put(MESSAGE_KEY, "Invalid request");
+
     if (state == null && action == null) {
       message = new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
           .put(EXTERNAL_STATUS_KEY, StatusCode.UNPROCESSABLE_ENTITY.getStatusCode())
@@ -74,13 +76,13 @@ public class StandardDeviceExample {
 
     } else {
       message = new JsonObject()
-          .put(CONNECTION_STATE_KEY, Actions.CONNECT.toString().toLowerCase())
           .put(INTERNAL_STATUS_KEY, InternalStatus.OK)
-          .put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode());
+          .put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode())
+          .put(COMMAND_ACTION_KEY, action.toString().toLowerCase());
     }
 
-      outputStream.println(message);
-      outputStream.flush();
+    outputStream.println(message);
+    outputStream.flush();
 
     return message;
   }

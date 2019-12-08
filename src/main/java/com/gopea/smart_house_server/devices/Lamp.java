@@ -8,6 +8,8 @@ import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
 
 import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
+import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
+import static com.gopea.smart_house_server.connectors.Connectors.COMMAND_ACTION_KEY;
 
 public class Lamp extends BaseDevice {
 
@@ -27,7 +29,13 @@ public class Lamp extends BaseDevice {
 
   @Override
   public Single<JsonObject> powerOff() {
-    return null;
+    return connector.sendMessage(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.POWER_OFF))
+        .flatMap(response -> {
+          if (isInternalStatusOk(response)) {
+            return connector.disconnect();
+          }
+          return Single.just(response);
+        });
   }
 
   @Override

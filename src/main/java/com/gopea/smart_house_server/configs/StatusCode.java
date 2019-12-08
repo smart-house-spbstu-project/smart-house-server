@@ -11,7 +11,8 @@ public enum StatusCode {
   FORBIDDEN(403),
   ERROR(500),
   UNAUTHORISED(401),
-  UNPROCESSABLE_ENTITY(422);
+  UNPROCESSABLE_ENTITY(422),
+  UNAVAILABLE(503);
 
   private final int statusCode;
 

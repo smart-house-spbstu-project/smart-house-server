@@ -1,6 +1,8 @@
 package com.gopea.smart_house_server.connectors;
 
 import com.gopea.smart_house_server.common.InternalStatus;
+import com.gopea.smart_house_server.configs.StatusCode;
+import com.gopea.smart_house_server.devices.DeviceAction;
 import com.gopea.smart_house_server.examples.StandardDeviceExample;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -9,13 +11,14 @@ import io.vertx.core.json.JsonObject;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
+import static com.gopea.smart_house_server.common.Helpers.MESSAGE_KEY;
 import static com.gopea.smart_house_server.common.Helpers.getEnum;
-import static com.gopea.smart_house_server.connectors.Connectors.ACTION_KEY;
+import static com.gopea.smart_house_server.connectors.Connectors.COMMAND_ACTION_KEY;
 
 public class BaseTestDeviceConnector extends Connector {
 
-  public static final String CONNECTION_STATE_KEY = "connection_state";
   public Deque<JsonObject> messagesFromDevice = new ArrayDeque<>();
 
   private boolean isConnected = false;
@@ -29,13 +32,33 @@ public class BaseTestDeviceConnector extends Connector {
 
   @Override
   public Single<JsonObject> sendMessage(JsonObject message) {
-    return Single.just(example.getResponse(message));
+
+    return isConnected().
+        map(isCon -> {
+          if (isCon) {
+            return example.getResponse(message);
+          }
+          return new JsonObject()
+              .put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
+              .put(EXTERNAL_STATUS_KEY, StatusCode.UNAVAILABLE.getStatusCode())
+              .put(MESSAGE_KEY, "Device is disconnected");
+        });
   }
 
   @Override
   public Maybe<JsonObject> getMessage() {
-    return hasMessage()
-        .flatMapMaybe(has -> has ? Maybe.just(messagesFromDevice.poll()) : Maybe.empty());
+    return isConnected()
+        .flatMapMaybe(isCon -> {
+          if (isCon) {
+            return hasMessage()
+                .flatMapMaybe(has -> has ? Maybe.just(messagesFromDevice.poll()) : Maybe.empty());
+          }
+          return Maybe.just(new JsonObject()
+              .put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
+              .put(EXTERNAL_STATUS_KEY, StatusCode.UNAVAILABLE.getStatusCode())
+              .put(MESSAGE_KEY, "Device is disconnected"));
+        });
+
   }
 
   @Override
@@ -50,8 +73,8 @@ public class BaseTestDeviceConnector extends Connector {
 
   @Override
   public Single<JsonObject> connect() {
-    JsonObject object = example.getResponse(new JsonObject().put(ACTION_KEY, Actions.CONNECT.toString().toLowerCase()));
-    ConnectionState connectionState = getEnum(object.getString(CONNECTION_STATE_KEY), ConnectionState.class);
+    JsonObject object = example.getResponse(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.CONNECT.toString().toLowerCase()));
+    ConnectionState connectionState = getEnum(object.getString(COMMAND_ACTION_KEY), ConnectionState.class);
     if (connectionState == null || connectionState.equals(ConnectionState.DISCONNECTED)) {
       return Single.just(
           new JsonObject()
@@ -59,7 +82,7 @@ public class BaseTestDeviceConnector extends Connector {
               .mergeIn(object)
       );
     }
-    object.remove(CONNECTION_STATE_KEY);
+    object.remove(COMMAND_ACTION_KEY);
     isConnected = true;
     return Single.just(
         new JsonObject()
@@ -70,7 +93,7 @@ public class BaseTestDeviceConnector extends Connector {
 
   @Override
   public Single<JsonObject> disconnect() {
-    JsonObject response = example.getResponse(new JsonObject().put(ACTION_KEY, Actions.DISCONNECT.toString().toLowerCase()));
+    JsonObject response = example.getResponse(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.DISCONNECT.toString().toLowerCase()));
     isConnected = false;
     return Single.just(
         new JsonObject()

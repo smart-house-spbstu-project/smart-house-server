@@ -105,7 +105,30 @@ public class DeviceRouter implements Routable {
           .subscribe();
     });
 
-    router.route(HttpMethod.POST, PATH + "/:id/power_off").handler(ctx -> {});
+    router.route(HttpMethod.POST, PATH + "/:id/power_off").handler(ctx -> {
+      if (!checkAdminRights(ctx)){
+        return;
+      }
+      String id = ctx.request().getParam(ID);
+      if (StringUtils.isBlank(id)) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, BASE_BAD_REQUEST_MESSAGE);
+        return;
+      }
+      DEVICE_STORAGE.getDevice(id)
+          .switchIfEmpty(handleEmptyCase(ctx, DEVICE_STORAGE.getDevice(id)))
+          .flatMapCompletable(device ->
+              device.powerOff()
+                  .flatMapCompletable(response -> {
+                    if (!isInternalStatusOk(response)) {
+                      makeErrorResponse(ctx, response);
+                      return Completable.complete();
+                    }
+                    makeRestResponseFromResponse(ctx, response);
+                    return Completable.complete();
+                  }))
+          .doOnError(err -> handleError(ctx, err))
+          .subscribe();
+    });
 
     router.route(HttpMethod.POST, PATH + "/:id/reboot").handler(ctx -> {});
 
