@@ -5,6 +5,7 @@ import com.gopea.smart_house_server.configs.StatusCode;
 import com.gopea.smart_house_server.routers.users.UserType;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
+import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -59,7 +60,10 @@ public class Helpers {
   }
 
   public static void makeRestResponseFromResponse(RoutingContext context, JsonObject response) {
-    makeRestResponse(context, response.getInteger(EXTERNAL_STATUS_KEY), null);
+    response.remove(INTERNAL_STATUS_KEY);
+    int statusKey = response.getInteger(EXTERNAL_STATUS_KEY);
+    response.remove(EXTERNAL_STATUS_KEY);
+    makeRestResponse(context, statusKey, response);
   }
 
   public static void makeErrorRestResponse(RoutingContext context, StatusCode code, Object message) {
@@ -86,9 +90,30 @@ public class Helpers {
     return null;
   }
 
-  public static <T> MaybeSource<T> handleEmptyCase(RoutingContext context) {
-    makeErrorRestResponse(context, StatusCode.NOT_FOUND, "Element not found");
-    return Maybe.empty();
+  public static <T> Maybe<T> handleEmptyCase(RoutingContext context, Maybe<T> maybe) {
+    return maybe
+        .isEmpty()
+        .flatMapMaybe(isEmpty -> {
+          if (isEmpty) {
+            makeErrorRestResponse(context, StatusCode.NOT_FOUND, "Element not found");
+            return Maybe.empty();
+          }
+          return maybe;
+        });
+
+  }
+
+  public static <T extends Enum> T getEnum(String name, Class<T> clazz) {
+    if (name == null) {
+      return null;
+    }
+    name = name.toUpperCase();
+    T en = null;
+    try {
+      en = (T) T.valueOf(clazz, name);
+    } catch (IllegalArgumentException e) {
+    }
+    return en;
   }
 
   public static boolean isInternalStatusOk(JsonObject response) {

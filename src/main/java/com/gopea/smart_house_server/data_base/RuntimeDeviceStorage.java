@@ -38,7 +38,7 @@ public class RuntimeDeviceStorage implements DeviceStorage {
   }
 
   @Override
-  public Maybe<? extends Device> getDevice(String id) {
+  public Maybe<Device> getDevice(String id) {
     Device device = devices.get(id);
     if (device == null) {
       return Maybe.empty();
@@ -66,8 +66,8 @@ public class RuntimeDeviceStorage implements DeviceStorage {
   }
 
   @Override
-  public Single<List<Pair<String, ? extends Device>>> getDevices() {
-    List<Pair<String, ? extends Device>> list = new ArrayList<>();
+  public Single<List<Pair<String, Device>>> getDevices() {
+    List<Pair<String, Device>> list = new ArrayList<>();
     for (String key : devices.keySet()) {
       list.add(new ImmutablePair<>(key, devices.get(key)));
     }

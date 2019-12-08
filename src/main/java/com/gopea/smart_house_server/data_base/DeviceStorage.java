@@ -11,9 +11,9 @@ import java.util.List;
 public interface DeviceStorage {
   Single<JsonObject> addDevice(Device device);
 
-  Maybe<? extends Device> getDevice(String id);
+  Maybe<Device> getDevice(String id);
 
   Single<JsonObject> deleteDevice(String id);
 
-  Single<List<Pair<String, ? extends Device>>> getDevices();
+  Single<List<Pair<String,Device>>> getDevices();
 }

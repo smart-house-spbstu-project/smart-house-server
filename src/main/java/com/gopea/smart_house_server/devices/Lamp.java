@@ -1,8 +1,9 @@
 package com.gopea.smart_house_server.devices;
 
 import com.gopea.smart_house_server.common.InternalStatus;
-import com.gopea.smart_house_server.connectors.BaseDeviceConnector;
+import com.gopea.smart_house_server.connectors.BaseTestDeviceConnector;
 import com.gopea.smart_house_server.connectors.Connector;
+import com.gopea.smart_house_server.examples.StandardDeviceExample;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
 
@@ -16,7 +17,7 @@ public class Lamp extends BaseDevice {
 
   @Override
   protected Connector getConnector(String host, int port) {
-    return new BaseDeviceConnector(host, port);
+    return new BaseTestDeviceConnector(host, port, new StandardDeviceExample(DeviceType.LAMP, StandardDeviceExample.State.OFF, host, port));
   }
 
   @Override
@@ -45,10 +46,12 @@ public class Lamp extends BaseDevice {
   }
 
   @Override
-  public Single<JsonObject> execute(JsonObject command) {
-
-    return Single.just(new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.OK));
+  protected JsonObject validateCommand(JsonObject command) {
+    return new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.OK);
   }
 
-
+  @Override
+  protected Single<JsonObject> executeCommand(JsonObject command) {
+    return connector.sendMessage(command);
+  }
 }

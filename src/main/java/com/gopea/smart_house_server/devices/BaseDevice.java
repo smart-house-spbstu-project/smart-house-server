@@ -11,6 +11,7 @@ import io.vertx.core.json.JsonObject;
 import java.lang.reflect.Constructor;
 
 import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
+import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 
 public abstract class BaseDevice implements Device {
 
@@ -112,6 +113,19 @@ public abstract class BaseDevice implements Device {
         new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.OK)
     );
   }
+
+  @Override
+  public Single<JsonObject> execute(JsonObject command) {
+    JsonObject validation = validateCommand(command);
+    if (!isInternalStatusOk(validation)) {
+      return Single.just(validation);
+    }
+    return executeCommand(command);
+  }
+
+  protected abstract Single<JsonObject> executeCommand(JsonObject command);
+
+  protected abstract JsonObject validateCommand(JsonObject command);
 
   protected abstract JsonObject doToJson();
 }

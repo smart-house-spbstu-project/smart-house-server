@@ -20,7 +20,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.ArrayList;
 
 import static com.gopea.smart_house_server.common.Helpers.BASE_BAD_REQUEST_MESSAGE;
-import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.handleEmptyCase;
 import static com.gopea.smart_house_server.data_base.Storages.ID;
 import static com.gopea.smart_house_server.common.Helpers.MESSAGE_KEY;
@@ -72,7 +71,7 @@ public class DeviceRouter implements Routable {
                     return Completable.complete();
                   });
             }
-            makeErrorRestResponse(ctx, StatusCode.UNADDRESSABLE_ENTITY, connectorResponse.getString(MESSAGE_KEY));
+            makeErrorRestResponse(ctx, StatusCode.UNPROCESSABLE_ENTITY, connectorResponse.getString(MESSAGE_KEY));
             return Completable.complete();
           })
           .doOnError(err -> handleError(ctx, err))
@@ -91,23 +90,34 @@ public class DeviceRouter implements Routable {
         return;
       }
       DEVICE_STORAGE.getDevice(id)
-          .switchIfEmpty(handleEmptyCase(ctx))
+          .switchIfEmpty(handleEmptyCase(ctx, DEVICE_STORAGE.getDevice(id)))
           .flatMapCompletable(device ->
               device.execute(body)
                   .flatMapCompletable(response -> {
                     if (!isInternalStatusOk(response)) {
                       makeErrorResponse(ctx, response);
+                      return Completable.complete();
                     }
-                    //TODO: output data from device
                     makeRestResponseFromResponse(ctx, response);
                     return Completable.complete();
                   }))
           .doOnError(err -> handleError(ctx, err))
           .subscribe();
-      ctx.response().end();
     });
 
-    router.route(HttpMethod.GET, PATH + "/:id").handler(ctx -> {});
+    router.route(HttpMethod.POST, PATH + "/:id/power_off").handler(ctx -> {});
+
+    router.route(HttpMethod.POST, PATH + "/:id/reboot").handler(ctx -> {});
+
+    router.route(HttpMethod.POST, PATH + "/:id/disconnect").handler(ctx -> {});
+
+    router.route(HttpMethod.GET, PATH + "/:id").handler(ctx -> {
+
+    });
+
+    router.route(HttpMethod.GET, PATH + "/:id/generate_metrics").handler(ctx -> {
+
+    });
 
     router.route(HttpMethod.GET, PATH).handler(ctx -> {
       String deviceTypeParam = ctx.request().getParam(DEVICE_TYPE_KEY);
@@ -164,7 +174,7 @@ public class DeviceRouter implements Routable {
         return;
       }
       DEVICE_STORAGE.getDevice(id)
-          .switchIfEmpty(handleEmptyCase(ctx))
+          .switchIfEmpty(handleEmptyCase(ctx, DEVICE_STORAGE.getDevice(id)))
           .flatMapCompletable(device ->
               device.update(deviceProperty)
                   .flatMapCompletable(response -> {

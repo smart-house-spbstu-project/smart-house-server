@@ -125,7 +125,7 @@ public class UserRouter implements Routable {
       String password = body.getString(PASSWORD_KEY);
       if (StringUtils.isNotEmpty(password)) {
         Storages.USER_STORAGE.getUser(username)
-            .switchIfEmpty(handleEmptyCase(routingContext))
+            .switchIfEmpty(handleEmptyCase(routingContext, Storages.USER_STORAGE.getUser(username)))
             .flatMapSingle(user -> Single.just(user.setPassword(password)))
             .flatMap(Storages.USER_STORAGE::updatePassword)
             .flatMapCompletable(response -> {
