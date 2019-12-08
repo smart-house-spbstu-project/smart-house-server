@@ -6,8 +6,8 @@ public enum DeviceType {
   //FIREFIGHT_SYSTEM(RGBLamp.class),
   LAMP(Lamp.class),
   RGB_LAMP(RGBLamp.class),
-  WINDOW(RGBLamp.class),
-  DOOR(RGBLamp.class);
+  WINDOW(Window.class),
+  DOOR(Door.class);
 
   private Class<? extends BaseDevice> clazz;
 

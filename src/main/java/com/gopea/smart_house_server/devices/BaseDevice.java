@@ -2,6 +2,7 @@ package com.gopea.smart_house_server.devices;
 
 import com.gopea.smart_house_server.common.Helpers;
 import com.gopea.smart_house_server.common.InternalStatus;
+import com.gopea.smart_house_server.configs.StatusCode;
 import com.gopea.smart_house_server.connectors.Connector;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -127,7 +128,10 @@ public abstract class BaseDevice implements Device {
     Integer updateTimeParam = object.getInteger(UPDATE_TIME_KEY);
     setUpdateTime(updateTimeParam);
     return Single.just(
-        new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.OK)
+        new JsonObject()
+            .put(INTERNAL_STATUS_KEY, InternalStatus.OK)
+            .put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode())
+            .put(UPDATE_TIME_KEY, updateTime)
     );
   }
 
@@ -179,6 +183,8 @@ public abstract class BaseDevice implements Device {
   protected abstract Single<JsonObject> getDeviceData();
 
   protected abstract Single<JsonObject> powerOffDevice();
+
+  protected abstract void handleEvent(JsonObject message);
 
   private Thread createAskThread() {
     return new Thread(() ->

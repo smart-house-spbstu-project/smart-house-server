@@ -258,7 +258,7 @@ public class DeviceRouter implements Routable {
                     if (!isInternalStatusOk(response)) {
                       makeErrorResponse(ctx, response);
                     }
-                    ctx.response().setStatusCode(StatusCode.SUCCESS.getStatusCode());
+                    makeRestResponseFromResponse(ctx, response);
                     ctx.response().end();
                     return Completable.complete();
                   }))
