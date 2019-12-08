@@ -13,4 +13,9 @@ public class Lamp extends BaseDeviceImpl {
   protected Connector getConnector(String host, int port) {
     return new BaseTestDeviceConnector(host, port, new StandardDeviceExample( DeviceType.LAMP, StandardDeviceExample.State.OFF, host, port));
   }
+
+  @Override
+  public DeviceType getType() {
+    return DeviceType.LAMP;
+  }
 }

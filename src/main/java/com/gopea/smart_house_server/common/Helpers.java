@@ -128,6 +128,13 @@ public class Helpers {
     return false;
   }
 
+  public static JsonObject createResponseJson(InternalStatus status, StatusCode code, @NotNull JsonObject response) {
+    return new JsonObject()
+        .put(INTERNAL_STATUS_KEY, status)
+        .put(EXTERNAL_STATUS_KEY, code.getStatusCode())
+        .mergeIn(response);
+  }
+
   private static void makeRestResponse(RoutingContext context, int code, JsonObject message) {
     context.response().setStatusCode(code);
     if (message != null) {

@@ -2,6 +2,7 @@ package com.gopea.smart_house_server.configs;
 
 
 import com.gopea.smart_house_server.routers.AuthRouter;
+import com.gopea.smart_house_server.routers.DevicePoolRouter;
 import com.gopea.smart_house_server.routers.DeviceRouter;
 import com.gopea.smart_house_server.routers.HelloRouter;
 import com.gopea.smart_house_server.routers.Routable;
@@ -24,7 +25,8 @@ public final class RoutConfiguration {
       new HelloRouter(),
       new StaticContentRouter(),
       new UserRouter(),
-      new DeviceRouter()
+      new DeviceRouter(),
+      new DevicePoolRouter()
   );
 
   public static void configureRouter(Router router, Vertx vertx) {

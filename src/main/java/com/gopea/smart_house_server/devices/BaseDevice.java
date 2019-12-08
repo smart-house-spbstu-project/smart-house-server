@@ -52,7 +52,6 @@ public abstract class BaseDevice implements Device {
     connector = getConnector(host, port);
     state = DeviceState.DISCONNECTED;
     metrics = new JsonArray();
-
   }
 
   @Override
@@ -89,8 +88,8 @@ public abstract class BaseDevice implements Device {
    *
    * @return The state.
    */
-  public DeviceState getState() {
-    return state;
+  public Single<DeviceState> getState() {
+    return Single.just(state);
   }
 
   /**

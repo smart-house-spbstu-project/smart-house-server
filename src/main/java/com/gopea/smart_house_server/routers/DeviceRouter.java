@@ -35,11 +35,12 @@ import static com.gopea.smart_house_server.common.Helpers.makeErrorResponse;
 import static com.gopea.smart_house_server.common.Helpers.makeErrorRestResponse;
 import static com.gopea.smart_house_server.common.Helpers.makeRestResponseFromResponse;
 import static com.gopea.smart_house_server.devices.BaseDevice.UPDATE_TIME_KEY;
+import static com.gopea.smart_house_server.devices.Devices.DEVICE_PROPERTIES_KEY;
+import static com.gopea.smart_house_server.devices.Devices.DEVICE_TYPE_KEY;
 
 public class DeviceRouter implements Routable {
   private static final String PATH = RoutConfiguration.REST_PREFIX + "/device";
-  private static final String DEVICE_TYPE_KEY = "device_type";
-  private static final String DEVICE_PROPERTIES_KEY = "device_properties";
+
 
   @Override
   public Router loadRouter(Vertx vertx) {
@@ -208,7 +209,7 @@ public class DeviceRouter implements Routable {
             for (Pair<String, ? extends Device> pair : list) {
               JsonObject object = new JsonObject()
                   .put(ID, pair.getLeft())
-                  .put(DEVICE_TYPE_KEY, DeviceType.getEnum(pair.getRight().getClass()).toString().toLowerCase())
+                  .put(DEVICE_TYPE_KEY, pair.getRight().getType().toString().toLowerCase())
                   .mergeIn(pair.getRight().toJson());
               array.add(object);
             }
@@ -257,9 +258,9 @@ public class DeviceRouter implements Routable {
                   .flatMapCompletable(response -> {
                     if (!isInternalStatusOk(response)) {
                       makeErrorResponse(ctx, response);
+                      return Completable.complete();
                     }
                     makeRestResponseFromResponse(ctx, response);
-                    ctx.response().end();
                     return Completable.complete();
                   }))
           .doOnError(err -> handleError(ctx, err))
@@ -267,6 +268,10 @@ public class DeviceRouter implements Routable {
     });
 
     router.route(HttpMethod.DELETE, PATH + "/:id").handler(ctx -> {
+      if (!checkAdminRights(ctx)) {
+        return;
+      }
+
       String id = ctx.request().getParam("id");
       if (StringUtils.isBlank(id)) {
         makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, "id param couldn't be blank");

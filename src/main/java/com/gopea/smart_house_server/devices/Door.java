@@ -15,4 +15,8 @@ public class Door extends BaseDeviceImpl {
     return new BaseTestDeviceConnector(host, port, new StandardDeviceExample(DeviceType.DOOR, StandardDeviceExample.State.OFF, host, port));
   }
 
+  @Override
+  public DeviceType getType() {
+    return DeviceType.DOOR;
+  }
 }

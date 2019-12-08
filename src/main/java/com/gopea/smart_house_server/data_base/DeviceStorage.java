@@ -15,5 +15,5 @@ public interface DeviceStorage {
 
   Single<JsonObject> deleteDevice(String id);
 
-  Single<List<Pair<String,Device>>> getDevices();
+  Single<List<Pair<String, Device>>> getDevices();
 }

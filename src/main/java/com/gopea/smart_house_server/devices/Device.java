@@ -22,4 +22,8 @@ public interface Device extends Connectible {
   Single<JsonObject> update(JsonObject object);
 
   Single<JsonArray> getMetrics();
+
+  Single<DeviceState> getState();
+
+  DeviceType getType();
 }
