@@ -17,8 +17,8 @@ public abstract class BaseDevice implements Device {
 
   public static final String HOST_KEY = "host";
   public static final String PORT_KEY = "port";
-  public static final String UPDATE_STATE_TIME_KEY = "update_state_time";
-  public static final String STATE_KEY = "state";
+  public static final String UPDATE_STATE_TIME_KEY = "update_time";
+  public static final String STATUS_KEY = "status";
 
   public static BaseDevice getInstance(Class<? extends BaseDevice> clazz, JsonObject object) throws Exception {
     Constructor<? extends BaseDevice> constructor = clazz.getConstructor(JsonObject.class);
@@ -101,7 +101,7 @@ public abstract class BaseDevice implements Device {
     object.put(HOST_KEY, host);
     object.put(PORT_KEY, port);
     object.put(UPDATE_STATE_TIME_KEY, updateTime);
-    object.put(STATE_KEY, state.toString().toLowerCase());
+    object.put(STATUS_KEY, state.toString().toLowerCase());
     return object.mergeIn(doToJson());
   }
 
@@ -128,9 +128,19 @@ public abstract class BaseDevice implements Device {
     return Single.just(metrics);
   }
 
+  @Override
+  public Single<JsonObject> getData() {
+    return getDeviceData()
+        .doOnSuccess(data -> {
+          metrics.add(data);
+        });
+  }
+
   protected abstract Single<JsonObject> executeCommand(JsonObject command);
 
   protected abstract JsonObject validateCommand(JsonObject command);
 
   protected abstract JsonObject doToJson();
+
+  protected abstract Single<JsonObject> getDeviceData();
 }

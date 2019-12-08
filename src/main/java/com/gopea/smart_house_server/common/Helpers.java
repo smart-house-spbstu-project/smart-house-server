@@ -20,7 +20,7 @@ public class Helpers {
   public static final String USER_TYPE_HEADER = "User-Type";
   public static final String USERNAME_HEADER = "Username";
   public static final String PASSWORDS_FILE = "passwords.json";
-  public static final String INTERNAL_STATUS_KEY = "status";
+  public static final String INTERNAL_STATUS_KEY = "internal_status";
   public static final String EXTERNAL_STATUS_KEY = "rest_status";
   public static final String MESSAGE_KEY = "message";
   public static final String BASE_BAD_REQUEST_MESSAGE = "Bad request";

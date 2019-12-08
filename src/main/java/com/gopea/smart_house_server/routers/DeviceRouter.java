@@ -145,6 +145,26 @@ public class DeviceRouter implements Routable {
 
 
     router.route(HttpMethod.GET, PATH + "/:id").handler(ctx -> {
+      String id = ctx.request().getParam(ID);
+      if (StringUtils.isBlank(id)) {
+        makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, BASE_BAD_REQUEST_MESSAGE);
+        return;
+      }
+      handleDeviceActionWithId(ctx, id, device -> device
+          .getData()
+          .flatMap(response -> {
+            if(isInternalStatusOk(response)) {
+              return device.getStatus()
+                  .map(response1 -> {
+                    if (isInternalStatusOk(response1)) {
+                      return response.mergeIn(response1);
+                    }
+                    return response1;
+                  });
+            }
+            return Single.just(response);
+          })
+      );
 
     });
 

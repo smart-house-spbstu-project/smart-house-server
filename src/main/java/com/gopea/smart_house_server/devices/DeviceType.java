@@ -2,8 +2,8 @@ package com.gopea.smart_house_server.devices;
 
 
 public enum DeviceType {
-  SMOKE_DETECTOR(RGBLamp.class),
-  FIREFIGHT_SYSTEM(RGBLamp.class),
+  //FIRE_DETECTOR(RGBLamp.class),
+  //FIREFIGHT_SYSTEM(RGBLamp.class),
   LAMP(Lamp.class),
   RGB_LAMP(RGBLamp.class),
   WINDOW(RGBLamp.class),

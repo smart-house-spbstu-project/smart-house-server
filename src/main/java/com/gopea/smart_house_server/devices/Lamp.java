@@ -28,6 +28,15 @@ public class Lamp extends BaseDevice {
   }
 
   @Override
+  protected Single<JsonObject> getDeviceData() {
+    return connector.sendMessage(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.GET_DATA))
+        .map(data -> {
+          data.remove(COMMAND_ACTION_KEY);
+          return data;
+        });
+  }
+
+  @Override
   public Single<JsonObject> powerOff() {
     return connector.sendMessage(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.POWER_OFF))
         .flatMap(response -> {
@@ -44,8 +53,8 @@ public class Lamp extends BaseDevice {
         .flatMap(response -> {
           if (isInternalStatusOk(response)) {
             return disconnect()
-                .flatMap(response1->{
-                  if (isInternalStatusOk(response1)){
+                .flatMap(response1 -> {
+                  if (isInternalStatusOk(response1)) {
                     return connect();
                   }
                   return Single.just(response1);
@@ -56,13 +65,12 @@ public class Lamp extends BaseDevice {
   }
 
   @Override
-  public Single<JsonObject> getData() {
-    return null;
-  }
-
-  @Override
   public Single<JsonObject> getStatus() {
-    return null;
+    return connector.sendMessage(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.GET_STATUS))
+        .map(data -> {
+          data.remove(COMMAND_ACTION_KEY);
+          return data;
+        });
   }
 
   @Override

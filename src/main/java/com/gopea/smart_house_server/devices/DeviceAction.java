@@ -4,5 +4,7 @@ public enum DeviceAction {
   CONNECT,
   DISCONNECT,
   POWER_OFF,
-  REBOOT;
+  REBOOT,
+  GET_DATA,
+  GET_STATUS;
 }

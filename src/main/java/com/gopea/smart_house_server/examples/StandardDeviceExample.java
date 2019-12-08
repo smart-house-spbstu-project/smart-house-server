@@ -15,28 +15,33 @@ import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.MESSAGE_KEY;
 import static com.gopea.smart_house_server.common.Helpers.getEnum;
 import static com.gopea.smart_house_server.connectors.Connectors.COMMAND_ACTION_KEY;
+import static com.gopea.smart_house_server.devices.BaseDevice.HOST_KEY;
+import static com.gopea.smart_house_server.devices.BaseDevice.PORT_KEY;
 
 
 public class StandardDeviceExample {
 
   public static final String STATE_KEY = "state";
+  public static final String DATA_KEY = "data";
+  public static final String STATUS_KEY = "status";
 
-  private static int id = 0;
+  private static int ID = 0;
   private final DeviceType type;
   private BaseTestDeviceConnector connector;
   private State state;
   private final int port;
   private final String host;
   private PrintWriter outputStream;
+  private final int id;
 
   public StandardDeviceExample(DeviceType type, State state, String host, int port) {
     this.type = type;
     this.state = state;
     this.port = port;
     this.host = host;
-
+    this.id = ID++;
     try {
-      outputStream = new PrintWriter(String.format("%s_%s_port_%d_id%d.txt", type.toString(), host, port, id++));
+      outputStream = new PrintWriter(String.format("%s_%s_port_%d_id%d.txt", type.toString(), host, port, this.id));
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -81,6 +86,15 @@ public class StandardDeviceExample {
           .put(COMMAND_ACTION_KEY, action.toString().toLowerCase());
       if (action.equals(DeviceAction.CONNECT) || action.equals(DeviceAction.DISCONNECT)) {
         message.put(COMMAND_ACTION_KEY, action.toString().toLowerCase() + "ed"); //TODO: fix it in the future
+      } else if (action.equals(DeviceAction.GET_DATA)) {
+        message.put(DATA_KEY, new JsonObject()
+            .put(STATE_KEY, this.state.toString().toLowerCase())
+            .put("id", id));
+      } else if (action.equals(DeviceAction.GET_STATUS)) {
+        message.put(STATUS_KEY, new JsonObject()
+            .put(HOST_KEY, host)
+            .put(PORT_KEY, port)
+            .put(STATUS_KEY, "Connected"));
       }
     }
 
