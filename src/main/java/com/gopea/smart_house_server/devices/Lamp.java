@@ -37,7 +37,7 @@ public class Lamp extends BaseDevice {
   }
 
   @Override
-  public Single<JsonObject> powerOff() {
+  protected Single<JsonObject> powerOffDevice() {
     return connector.sendMessage(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.POWER_OFF))
         .flatMap(response -> {
           if (isInternalStatusOk(response)) {

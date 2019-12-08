@@ -4,12 +4,11 @@ package com.gopea.smart_house_server.common;
 import com.gopea.smart_house_server.configs.StatusCode;
 import com.gopea.smart_house_server.routers.users.UserType;
 import io.reactivex.Maybe;
-import io.reactivex.MaybeSource;
-import io.reactivex.Single;
+
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -118,6 +117,15 @@ public class Helpers {
 
   public static boolean isInternalStatusOk(JsonObject response) {
     return InternalStatus.valueOf(response.getString(INTERNAL_STATUS_KEY)).isOk;
+  }
+
+  public static boolean isEqualsWithAny(@NotNull Object base, Object... others) {
+    for (Object object : others) {
+      if (base.equals(object)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void makeRestResponse(RoutingContext context, int code, JsonObject message) {

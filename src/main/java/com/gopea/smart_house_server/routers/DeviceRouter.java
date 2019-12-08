@@ -34,6 +34,7 @@ import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 import static com.gopea.smart_house_server.common.Helpers.makeErrorResponse;
 import static com.gopea.smart_house_server.common.Helpers.makeErrorRestResponse;
 import static com.gopea.smart_house_server.common.Helpers.makeRestResponseFromResponse;
+import static com.gopea.smart_house_server.devices.BaseDevice.UPDATE_TIME_KEY;
 
 public class DeviceRouter implements Routable {
   private static final String PATH = RoutConfiguration.REST_PREFIX + "/device";
@@ -144,7 +145,6 @@ public class DeviceRouter implements Routable {
       handleDeviceActionWithId(ctx, id, Device::connect);
     });
 
-
     router.route(HttpMethod.GET, PATH + "/:id").handler(ctx -> {
       String id = ctx.request().getParam(ID);
       if (StringUtils.isBlank(id)) {
@@ -243,6 +243,13 @@ public class DeviceRouter implements Routable {
         makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, String.format("%s is required field", DEVICE_PROPERTIES_KEY));
         return;
       }
+      if (deviceProperty.getValue(UPDATE_TIME_KEY) != null) {
+        Object updateTimeObj = deviceProperty.getValue(UPDATE_TIME_KEY);
+        if (!(updateTimeObj instanceof Integer) || ((int) updateTimeObj) < 0) {
+          makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, String.format("%s should be a non negative int", UPDATE_TIME_KEY));
+          return;
+        }
+      }
       DEVICE_STORAGE.getDevice(id)
           .switchIfEmpty(handleEmptyCase(ctx, DEVICE_STORAGE.getDevice(id)))
           .flatMapCompletable(device ->
@@ -278,6 +285,7 @@ public class DeviceRouter implements Routable {
           .doOnError(error -> handleError(ctx, error))
           .subscribe();
     });
+
     return router;
   }
 
@@ -303,12 +311,20 @@ public class DeviceRouter implements Routable {
       return false;
     }
 
-    if (body.getJsonObject(DEVICE_PROPERTIES_KEY) == null) {
+    JsonObject deviceProp = body.getJsonObject(DEVICE_PROPERTIES_KEY);
+
+    if (deviceProp == null) {
       makeErrorRestResponse(context, StatusCode.BAD_REQUEST, String.format("%s field is required", DEVICE_PROPERTIES_KEY));
       return false;
     }
 
-
+    if (deviceProp.getValue(UPDATE_TIME_KEY) != null) {
+      Object updateTimeObj = deviceProp.getValue(UPDATE_TIME_KEY);
+      if (!(updateTimeObj instanceof Integer) || ((int) updateTimeObj) < 0) {
+        makeErrorRestResponse(context, StatusCode.BAD_REQUEST, String.format("%s should be a non negative int", UPDATE_TIME_KEY));
+        return false;
+      }
+    }
     return true;
   }
 

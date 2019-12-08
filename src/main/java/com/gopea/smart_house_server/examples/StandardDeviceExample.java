@@ -106,6 +106,7 @@ public class StandardDeviceExample {
 
   public enum State {
     ON,
-    OFF;
+    OFF,
+    ERROR;
   }
 }

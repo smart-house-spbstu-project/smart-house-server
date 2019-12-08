@@ -20,6 +20,7 @@ import static com.gopea.smart_house_server.connectors.Connectors.COMMAND_ACTION_
 public class BaseTestDeviceConnector extends Connector {
 
   public Deque<JsonObject> messagesFromDevice = new ArrayDeque<>();
+  public static final int MAX_REPEAT = 3;
 
   private boolean isConnected = false;
 
@@ -32,16 +33,18 @@ public class BaseTestDeviceConnector extends Connector {
 
   @Override
   public Single<JsonObject> sendMessage(JsonObject message) {
-
-    return isConnected().
-        map(isCon -> {
+    JsonObject errorResponse = new JsonObject()
+        .put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
+        .put(EXTERNAL_STATUS_KEY, StatusCode.UNAVAILABLE.getStatusCode())
+        .put(MESSAGE_KEY, "Device is unavailable");
+    return isConnected()
+        .flatMap(isCon -> {
           if (isCon) {
-            return example.getResponse(message);
+            return Single.just(example.getResponse(message))
+                .retry(MAX_REPEAT)
+                .onErrorResumeNext(ign -> Single.just(errorResponse));
           }
-          return new JsonObject()
-              .put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
-              .put(EXTERNAL_STATUS_KEY, StatusCode.UNAVAILABLE.getStatusCode())
-              .put(MESSAGE_KEY, "Device is disconnected");
+          return Single.just(errorResponse);
         });
   }
 
@@ -73,7 +76,6 @@ public class BaseTestDeviceConnector extends Connector {
 
   @Override
   public Single<JsonObject> connect() {
-
     JsonObject object = example.getResponse(new JsonObject().put(COMMAND_ACTION_KEY, DeviceAction.CONNECT.toString().toLowerCase()));
     ConnectionState connectionState = getEnum(object.getString(COMMAND_ACTION_KEY), ConnectionState.class);
     if (connectionState == null || connectionState.equals(ConnectionState.DISCONNECTED)) {
