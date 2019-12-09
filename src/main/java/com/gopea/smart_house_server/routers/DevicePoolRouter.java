@@ -1,8 +1,7 @@
 package com.gopea.smart_house_server.routers;
 
-import com.gopea.smart_house_server.configs.RoutConfiguration;
+import com.gopea.smart_house_server.configs.RouteConfiguration;
 import com.gopea.smart_house_server.configs.StatusCode;
-import com.gopea.smart_house_server.devices.Device;
 import com.gopea.smart_house_server.devices.DevicePool;
 import com.gopea.smart_house_server.devices.DeviceType;
 import io.reactivex.Completable;
@@ -10,16 +9,11 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.Router;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
-import static com.gopea.smart_house_server.common.Helpers.MESSAGE_KEY;
 import static com.gopea.smart_house_server.common.Helpers.checkAdminRights;
 import static com.gopea.smart_house_server.common.Helpers.getBody;
 import static com.gopea.smart_house_server.common.Helpers.handleError;
@@ -29,11 +23,10 @@ import static com.gopea.smart_house_server.common.Helpers.makeErrorRestResponse;
 import static com.gopea.smart_house_server.common.Helpers.makeRestResponseFromResponse;
 import static com.gopea.smart_house_server.data_base.Storages.DEVICE_STORAGE;
 import static com.gopea.smart_house_server.data_base.Storages.ID;
-import static com.gopea.smart_house_server.devices.Devices.DEVICE_PROPERTIES_KEY;
 import static com.gopea.smart_house_server.devices.Devices.DEVICE_TYPE_KEY;
 
 public class DevicePoolRouter implements Routable {
-  private static final String PATH = RoutConfiguration.REST_PREFIX + "/device_pool";
+  private static final String PATH = RouteConfiguration.REST_PREFIX + "/device_pool";
   private static final String DEVICES_KEY = "devices";
 
   @Override
@@ -57,7 +50,7 @@ public class DevicePoolRouter implements Routable {
         return;
       }
 
-      JsonArray devices = body.getJsonArray(DEVICES_KEY);
+      JsonArray devices = body.getJsonArray(DEVICES_KEY, new JsonArray());
 
       if (devices == null) {
         makeErrorRestResponse(ctx, StatusCode.BAD_REQUEST, String.format("%s field is required", DEVICES_KEY));

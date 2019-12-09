@@ -1,16 +1,14 @@
 package com.gopea.smart_house_server.routers;
 
-import com.gopea.smart_house_server.configs.RoutConfiguration;
+import com.gopea.smart_house_server.configs.RouteConfiguration;
 import com.gopea.smart_house_server.configs.StatusCode;
 import com.gopea.smart_house_server.devices.BaseDevice;
 import com.gopea.smart_house_server.devices.Device;
 import com.gopea.smart_house_server.devices.DeviceType;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.Vertx;
@@ -39,7 +37,7 @@ import static com.gopea.smart_house_server.devices.Devices.DEVICE_PROPERTIES_KEY
 import static com.gopea.smart_house_server.devices.Devices.DEVICE_TYPE_KEY;
 
 public class DeviceRouter implements Routable {
-  private static final String PATH = RoutConfiguration.REST_PREFIX + "/device";
+  private static final String PATH = RouteConfiguration.REST_PREFIX + "/device";
 
 
   @Override

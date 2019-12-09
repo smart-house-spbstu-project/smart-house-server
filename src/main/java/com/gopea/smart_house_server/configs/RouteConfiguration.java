@@ -11,11 +11,13 @@ import com.gopea.smart_house_server.routers.users.UserRouter;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.reactivex.ext.web.handler.CookieHandler;
+import io.vertx.reactivex.ext.web.handler.SessionHandler;
 
 import java.util.Arrays;
 import java.util.List;
 
-public final class RoutConfiguration {
+public final class RouteConfiguration {
   public static final String REST_PREFIX = "/rest";
   public static final String STATIC_CONTENT_PATH = "/info";
   public static final String SELECT_KEY = "select";
@@ -30,12 +32,13 @@ public final class RoutConfiguration {
   );
 
   public static void configureRouter(Router router, Vertx vertx) {
+    router.route().handler(CookieHandler.create());
     router.route().handler(BodyHandler.create());
     for (Routable routable : ROUTABLES) {
       router.mountSubRouter("/", routable.loadRouter(vertx));
     }
   }
 
-  private RoutConfiguration() {
+  private RouteConfiguration() {
   }
 }

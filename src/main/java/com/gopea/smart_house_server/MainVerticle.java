@@ -1,6 +1,6 @@
 package com.gopea.smart_house_server;
 
-import com.gopea.smart_house_server.configs.RoutConfiguration;
+import com.gopea.smart_house_server.configs.RouteConfiguration;
 import io.vertx.core.Future;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
@@ -15,7 +15,7 @@ public class MainVerticle extends AbstractVerticle {
   public void start(Future<Void> startFuture) throws Exception {
     super.start(startFuture);
     Router router = Router.router(vertx);
-    RoutConfiguration.configureRouter(router, vertx);
+    RouteConfiguration.configureRouter(router, vertx);
     setupInitConfig(vertx)
         .andThen(vertx
             .createHttpServer()

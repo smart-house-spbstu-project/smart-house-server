@@ -98,10 +98,14 @@ public class StandardDeviceExample {
       }
     }
 
-    outputStream.println(message);
-    outputStream.flush();
+    writeMessage(message);
 
     return message;
+  }
+
+  protected void writeMessage(JsonObject message) {
+    outputStream.println(message);
+    outputStream.flush();
   }
 
   public enum State {

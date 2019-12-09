@@ -1,6 +1,6 @@
 package com.gopea.smart_house_server.routers.users;
 
-import com.gopea.smart_house_server.configs.RoutConfiguration;
+import com.gopea.smart_house_server.configs.RouteConfiguration;
 import com.gopea.smart_house_server.configs.StatusCode;
 import com.gopea.smart_house_server.common.InternalStatus;
 import com.gopea.smart_house_server.data_base.Storages;
@@ -31,7 +31,7 @@ import static com.gopea.smart_house_server.common.Helpers.makeErrorResponse;
 
 public class UserRouter implements Routable {
 
-  private static final String PATH = RoutConfiguration.REST_PREFIX + "/user";
+  private static final String PATH = RouteConfiguration.REST_PREFIX + "/user";
   private static final String USER_TYPE_PARAM = "user_type";
   private static final String USERNAME_KEY = "username";
   private static final String USER_TYPE_KEY = "user_type";
