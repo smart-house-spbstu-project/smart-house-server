@@ -9,6 +9,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import netscape.javascript.JSObject;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -23,6 +24,7 @@ import static com.gopea.smart_house_server.common.Helpers.getEnum;
 import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 import static com.gopea.smart_house_server.data_base.Storages.DEVICE_STORAGE;
 import static com.gopea.smart_house_server.data_base.Storages.ID;
+import static com.gopea.smart_house_server.devices.BaseDevice.UPDATE_TIME_KEY;
 import static com.gopea.smart_house_server.devices.Devices.DEVICE_TYPE_KEY;
 
 public class DevicePool implements Device {
@@ -82,7 +84,12 @@ public class DevicePool implements Device {
 
   @Override
   public Single<JsonObject> update(JsonObject object) {
-    if (object == null || object.isEmpty()) {
+    Single<JsonObject> objectSingle = null;
+    if (object.containsKey(UPDATE_TIME_KEY)) {
+      objectSingle = cloneCommand(device -> device.update(object));
+    }
+
+    if (object.isEmpty()) {
       return Single.just(createResponseJson(InternalStatus.FAILED,
           StatusCode.BAD_REQUEST,
           new JsonObject().put(MESSAGE_KEY, "Empty body is invalid")));
@@ -106,17 +113,28 @@ public class DevicePool implements Device {
     }
 
     removeDevices(removeArray);
-    return addDevices(addArray)
-        .map(response -> {
-          if (!isInternalStatusOk(response)) {
-            return response;
-          }
-          JsonObject object1 = toJson();
-          object1.remove(DEVICE_TYPE_KEY);
-          object1.put(INTERNAL_STATUS_KEY, InternalStatus.OK);
-          object1.put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode());
-          return object1;
-        });
+    if (objectSingle == null) {
+      objectSingle = Single.just(new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.OK));
+    }
+    return
+        objectSingle
+            .flatMap(resp -> {
+              if (!isInternalStatusOk(resp)) {
+                return Single.just(resp);
+              }
+              return addDevices(addArray)
+                  .map(response -> {
+                    if (!isInternalStatusOk(response)) {
+                      return response;
+                    }
+                    JsonObject object1 = toJson();
+                    object1.remove(DEVICE_TYPE_KEY);
+                    object1.put(INTERNAL_STATUS_KEY, InternalStatus.OK);
+                    object1.put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode());
+                    return object1;
+                  });
+            });
+
   }
 
   @Override
@@ -150,13 +168,6 @@ public class DevicePool implements Device {
     return cloneCommand(Device::disconnect);
   }
 
-//  public Single<JsonObject> add(T device) {
-//    return null;
-//  }
-//
-//  public Single<JsonObject> remove(T device) {
-//    return null;
-//  }
 
   private Single<JsonObject> cloneCommand(Command command) {
     return Flowable.fromIterable(devices)
