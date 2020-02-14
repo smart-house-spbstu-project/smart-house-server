@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(VertxUnitRunner.class)
 public class BaseTests {
-  private static final int TIMEOUT = 60;
+  public static final int TIMEOUT = 60;
 
   @Test
   public void testSingleNull(TestContext context) {
