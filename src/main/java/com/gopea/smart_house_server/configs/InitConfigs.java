@@ -35,6 +35,6 @@ public class InitConfigs {
   }
 
   private InitConfigs() {
-
+    throw new UnsupportedOperationException();
   }
 }

@@ -14,6 +14,7 @@ import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import io.vertx.reactivex.ext.web.handler.CookieHandler;
 import io.vertx.reactivex.ext.web.handler.SessionHandler;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -22,14 +23,14 @@ public final class RouteConfiguration {
   public static final String STATIC_CONTENT_PATH = "/info";
   public static final String SELECT_KEY = "select";
 
-  public static final List<Routable> ROUTABLES = Arrays.asList(
+  public static final List<Routable> ROUTABLES = new ArrayList<>(Arrays.asList(
       new AuthRouter(),
       new HelloRouter(),
       new StaticContentRouter(),
       new UserRouter(),
       new DeviceRouter(),
       new DevicePoolRouter()
-  );
+  ));
 
   public static void configureRouter(Router router, Vertx vertx) {
     router.route().handler(CookieHandler.create());
@@ -40,5 +41,6 @@ public final class RouteConfiguration {
   }
 
   private RouteConfiguration() {
+    throw new UnsupportedOperationException();
   }
 }
