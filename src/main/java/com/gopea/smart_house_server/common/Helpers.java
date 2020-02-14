@@ -107,7 +107,7 @@ public class Helpers {
         name = name.toUpperCase();
         T en = null;
         try {
-            en = clazz.cast(T.valueOf(clazz, name));
+            en = (T) clazz.cast(T.valueOf(clazz, name));
         } catch (IllegalArgumentException e) {
         }
         return en;

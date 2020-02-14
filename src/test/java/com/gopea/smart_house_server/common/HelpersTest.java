@@ -322,7 +322,15 @@ public class HelpersTest {
 
     @Test
     public void isEqualsWithAnyTrue() {
-        assertFalse(Helpers.isEqualsWithAny(StatusCode.SUCCESS, StatusCode.BAD_REQUEST, StatusCode.SUCCESS,
+        assertTrue(Helpers.isEqualsWithAny(StatusCode.SUCCESS, StatusCode.BAD_REQUEST, StatusCode.SUCCESS,
                                             new Object(), InternalStatus.OK));
     }
+
+  @Test
+  public void testCreateResponseJson() {
+    JsonObject response = createResponseJson(InternalStatus.OK, StatusCode.NO_CONTENT, new JsonObject());
+
+    assertTrue(isInternalStatusOk(response));
+    assertEquals(StatusCode.NO_CONTENT.getStatusCode(), response.getInteger(EXTERNAL_STATUS_KEY).intValue());
+  }
 }
