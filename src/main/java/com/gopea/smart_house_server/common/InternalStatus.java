@@ -2,7 +2,7 @@ package com.gopea.smart_house_server.common;
 
 public enum InternalStatus {
   OK(true, "OK"),
-  FAILED(false, "FALSE");
+  FAILED(false, "FAIL");
   public final boolean isOk;
   public final String type;
 

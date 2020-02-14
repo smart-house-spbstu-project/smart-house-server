@@ -9,7 +9,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import netscape.javascript.JSObject;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -20,7 +19,6 @@ import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.INTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.MESSAGE_KEY;
 import static com.gopea.smart_house_server.common.Helpers.createResponseJson;
-import static com.gopea.smart_house_server.common.Helpers.getEnum;
 import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 import static com.gopea.smart_house_server.data_base.Storages.DEVICE_STORAGE;
 import static com.gopea.smart_house_server.data_base.Storages.ID;
