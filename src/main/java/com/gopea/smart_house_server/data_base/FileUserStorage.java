@@ -107,7 +107,7 @@ public class FileUserStorage implements UserStorage {
           }
           users.remove(username);
 
-          return vertx.fileSystem().rxWriteFile(filePath, Buffer.newInstance(users.toBuffer()))
+          return vertx.fileSystem().rxWriteFile(filePath, Buffer.newInstance(json.toBuffer()))
               .andThen(Single.just(
                   new JsonObject()
                       .put(INTERNAL_STATUS_KEY, InternalStatus.OK)
