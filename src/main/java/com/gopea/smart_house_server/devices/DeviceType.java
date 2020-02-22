@@ -15,7 +15,7 @@ public enum DeviceType {
     this.clazz = clazz;
   }
 
-  public static DeviceType getEnum(Class<? extends BaseDevice> clazz) {
+  public static DeviceType getEnum(Class<? extends Device> clazz) {
     for (DeviceType type : DeviceType.values()) {
       if (type.getClazz().equals(clazz)) {
         return type;

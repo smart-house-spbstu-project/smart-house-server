@@ -29,8 +29,8 @@ public abstract class BaseDevice implements Device {
   public static final String STATUS_KEY = "status";
   private long prevTime;
 
-  public static BaseDevice getInstance(Class<? extends BaseDevice> clazz, JsonObject object) throws Exception {
-    Constructor<? extends BaseDevice> constructor = clazz.getConstructor(JsonObject.class);
+  public static <T extends BaseDevice>T getInstance(Class<T> clazz, JsonObject object) throws Exception {
+    Constructor<T> constructor = clazz.getConstructor(JsonObject.class);
     return constructor.newInstance(object);
   }
 
