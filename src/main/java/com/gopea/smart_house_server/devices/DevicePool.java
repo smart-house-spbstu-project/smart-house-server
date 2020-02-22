@@ -142,7 +142,7 @@ public class DevicePool implements Device {
             .map(response -> new JsonObject()
                 .put(ID, pair.getLeft())
                 .put("metrics", response)))
-        .collectInto(new JsonArray(), (array, response) -> array.add(response));
+        .collectInto(new JsonArray(), JsonArray::add);
 
   }
 
@@ -170,7 +170,7 @@ public class DevicePool implements Device {
   private Single<JsonObject> cloneCommand(Command command) {
     return Flowable.fromIterable(devices)
         .flatMapSingle(pair -> command.execute(pair.getRight()).map(response -> response.put(ID, pair.getLeft())))
-        .collectInto(new JsonArray(), (array, response) -> array.add(response))
+        .collectInto(new JsonArray(), JsonArray::add)
         .map(array -> {
 
           InternalStatus status = InternalStatus.OK;
@@ -217,7 +217,7 @@ public class DevicePool implements Device {
             }
             return new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.OK);
           })
-          .doOnSuccess(ob -> response.mergeIn(ob))
+          .doOnSuccess(response::mergeIn)
           .switchIfEmpty(Single.fromCallable(() ->
               response.mergeIn(createResponseJson(InternalStatus.FAILED, StatusCode.UNPROCESSABLE_ENTITY,
                   new JsonObject().put(MESSAGE_KEY, String.format("Device with id: %s doesn't exists", id))))
