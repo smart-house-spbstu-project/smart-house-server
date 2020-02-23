@@ -21,96 +21,105 @@ import static com.gopea.smart_house_server.devices.BaseDevice.PORT_KEY;
 
 public class StandardDeviceExample {
 
-  public static final String STATE_KEY = "state";
-  public static final String DATA_KEY = "data";
-  public static final String STATUS_KEY = "status";
+    public static final String STATE_KEY = "state";
+    public static final String DATA_KEY = "data";
+    public static final String STATUS_KEY = "status";
 
-  private static int ID = 0;
-  private final DeviceType type;
-  private BaseTestDeviceConnector connector;
-  private State state;
-  private final int port;
-  private final String host;
-  private PrintWriter outputStream;
-  private final int id;
+    private static int ID = 0;
+    private final DeviceType type;
+    private BaseTestDeviceConnector connector;
+    private State state;
+    private final int port;
+    private final String host;
+    private PrintWriter outputStream;
+    private final int id;
 
-  public StandardDeviceExample(DeviceType type, State state, String host, int port) {
-    this.type = type;
-    this.state = state;
-    this.port = port;
-    this.host = host;
-    this.id = ID++;
-    try {
-      outputStream = new PrintWriter(String.format("%s_%s_port_%d_id%d.txt", type.toString(), host, port, this.id));
-    } catch (IOException e) {
-      e.printStackTrace();
+    public StandardDeviceExample(DeviceType type, State state, String host, int port) {
+        this.type = type;
+        this.state = state;
+        this.port = port;
+        this.host = host;
+        this.id = ID++;
+        try {
+            outputStream = new PrintWriter(String.format("%s_%s_port_%d_id%d.txt", type.toString(), host, port, this.id));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
-  }
-
-  /**
-   * Setter for the connector.
-   *
-   * @param connector The connector.
-   * @return This, so the API can be used fluently.
-   */
-  public StandardDeviceExample setConnector(BaseTestDeviceConnector connector) {
-    this.connector = connector;
-    return this;
-  }
-
-  public JsonObject getResponse(JsonObject command) {
-
-    DeviceAction action = getEnum(command.getString(COMMAND_ACTION_KEY), DeviceAction.class);
-    State state = getEnum(command.getString(STATE_KEY), State.class);
-    JsonObject message = new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
-        .put(EXTERNAL_STATUS_KEY, StatusCode.UNPROCESSABLE_ENTITY.getStatusCode())
-        .put(MESSAGE_KEY, "Invalid request");
-
-    if (state == null && action == null) {
-      message = new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
-          .put(EXTERNAL_STATUS_KEY, StatusCode.UNPROCESSABLE_ENTITY.getStatusCode())
-          .put(MESSAGE_KEY, "Invalid new state");
-    } else if (state != null) {
-
-      this.state = state;
-
-      message = new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.OK)
-          .put(STATE_KEY, state.toString().toLowerCase())
-          .put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode());
-
-    } else {
-      message = new JsonObject()
-          .put(INTERNAL_STATUS_KEY, InternalStatus.OK)
-          .put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode())
-          .put(COMMAND_ACTION_KEY, action.toString().toLowerCase());
-      if (action.equals(DeviceAction.CONNECT) || action.equals(DeviceAction.DISCONNECT)) {
-        message.put(COMMAND_ACTION_KEY, action.toString().toLowerCase() + "ed"); //TODO: fix it in the future
-      } else if (action.equals(DeviceAction.GET_DATA)) {
-        message.put(DATA_KEY, new JsonObject()
-            .put(STATE_KEY, this.state.toString().toLowerCase())
-            .put("id", id));
-      } else if (action.equals(DeviceAction.GET_STATUS)) {
-        message.put(STATUS_KEY, new JsonObject()
-            .put(HOST_KEY, host)
-            .put(PORT_KEY, port)
-            .put(STATUS_KEY, "Connected"));
-      }
+    /**
+     * Setter for the connector.
+     *
+     * @param connector The connector.
+     * @return This, so the API can be used fluently.
+     */
+    public StandardDeviceExample setConnector(BaseTestDeviceConnector connector) {
+        this.connector = connector;
+        return this;
     }
 
-    writeMessage(message);
+    public JsonObject getResponse(JsonObject command) {
 
-    return message;
-  }
+        String actionString = command.getString(COMMAND_ACTION_KEY);
+        String stateString = command.getString(STATE_KEY);
 
-  protected void writeMessage(JsonObject message) {
-    outputStream.println(message);
-    outputStream.flush();
-  }
+        if (actionString == null && stateString == null) {
+            return new JsonObject()
+                    .put(INTERNAL_STATUS_KEY, InternalStatus.OK)
+                    .put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode());
+        }
+        DeviceAction action = getEnum(actionString, DeviceAction.class);
+        State state = getEnum(stateString, State.class);
 
-  public enum State {
-    ON,
-    OFF,
-    ERROR;
-  }
+        JsonObject message = new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
+                .put(EXTERNAL_STATUS_KEY, StatusCode.UNPROCESSABLE_ENTITY.getStatusCode())
+                .put(MESSAGE_KEY, "Invalid request");
+
+        if (state == null && action == null) {
+            message = new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
+                    .put(EXTERNAL_STATUS_KEY, StatusCode.UNPROCESSABLE_ENTITY.getStatusCode())
+                    .put(MESSAGE_KEY, "Invalid new state");
+        } else if (state != null) {
+
+            this.state = state;
+
+            message = new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.OK)
+                    .put(STATE_KEY, state.toString().toLowerCase())
+                    .put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode());
+
+        } else {
+            message = new JsonObject()
+                    .put(INTERNAL_STATUS_KEY, InternalStatus.OK)
+                    .put(EXTERNAL_STATUS_KEY, StatusCode.SUCCESS.getStatusCode())
+                    .put(COMMAND_ACTION_KEY, action.toString().toLowerCase());
+            if (action.equals(DeviceAction.CONNECT) || action.equals(DeviceAction.DISCONNECT)) {
+                message.put(COMMAND_ACTION_KEY, action.toString().toLowerCase() + "ed"); //TODO: fix it in the future
+            } else if (action.equals(DeviceAction.GET_DATA)) {
+                message.put(DATA_KEY, new JsonObject()
+                        .put(STATE_KEY, this.state.toString().toLowerCase())
+                        .put("id", id));
+            } else if (action.equals(DeviceAction.GET_STATUS)) {
+                message.put(STATUS_KEY, new JsonObject()
+                        .put(HOST_KEY, host)
+                        .put(PORT_KEY, port)
+                        .put(STATUS_KEY, "Connected"));
+            }
+        }
+
+        writeMessage(message);
+
+        return message;
+    }
+
+    protected void writeMessage(JsonObject message) {
+        outputStream.println(message);
+        outputStream.flush();
+    }
+
+    public enum State {
+        ON,
+        OFF,
+        ERROR;
+    }
 }
