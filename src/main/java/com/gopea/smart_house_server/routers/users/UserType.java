@@ -1,7 +1,5 @@
 package com.gopea.smart_house_server.routers.users;
 
-import org.jetbrains.annotations.NotNull;
-
 public enum UserType {
   ADMIN,
   USER;

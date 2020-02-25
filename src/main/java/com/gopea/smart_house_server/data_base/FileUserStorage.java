@@ -75,7 +75,7 @@ public class FileUserStorage implements UserStorage {
             return Single.just(
                 new JsonObject()
                     .put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
-                    .put(EXTERNAL_STATUS_KEY, StatusCode.BAD_REQUEST.getStatusCode())
+                    .put(EXTERNAL_STATUS_KEY, StatusCode.UNPROCESSABLE_ENTITY.getStatusCode())
                     .put(MESSAGE_KEY, String.format("User %s already exists", user.getUsername()))
             );
           }
@@ -127,7 +127,7 @@ public class FileUserStorage implements UserStorage {
     return getUsers()
         .flatMap(list -> Flowable.fromIterable(list)
             .filter(user -> user.getUserType().equals(userType))
-            .collectInto(new ArrayList<User>(), (arrayList, user) -> arrayList.add(user)));
+            .collectInto(new ArrayList<>(), ArrayList::add));
   }
 
   @Override
