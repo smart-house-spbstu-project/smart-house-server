@@ -38,7 +38,7 @@ public class FileUserStorageTest {
     final Async async = context.async();
     vertx.fileSystem()
         .rxWriteFile(path, Buffer.newInstance(objet.toBuffer()))
-        .andThen(Completable.fromAction(() -> async.complete()))
+        .andThen(Completable.fromAction(async::complete))
         .subscribe();
     target = new FileUserStorage(vertx, path);
   }
@@ -48,7 +48,7 @@ public class FileUserStorageTest {
     final Async async = context.async();
 
     vertx.fileSystem().rxDelete(path)
-        .andThen(Completable.fromAction(() -> async.complete()))
+        .andThen(Completable.fromAction(async::complete))
         .subscribe();
 
     vertx.close(context.asyncAssertSuccess());

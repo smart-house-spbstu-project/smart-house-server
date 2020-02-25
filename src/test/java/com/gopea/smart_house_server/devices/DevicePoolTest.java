@@ -337,4 +337,20 @@ public class DevicePoolTest {
                 .subscribe();
     }
 
+    @Test(timeout = 60000)
+    public void testUpdateRemoveEmptyBody(TestContext context) {
+        final Async async = context.async();
+
+        final JsonObject command = new JsonObject();
+
+        device.connect()
+                .flatMap(ign -> device.update(command))
+                .flatMapCompletable(response -> Completable.fromAction(() -> {
+                    context.assertFalse(isInternalStatusOk(response));
+                    context.assertEquals(StatusCode.BAD_REQUEST.getStatusCode(), response.getInteger(EXTERNAL_STATUS_KEY));
+                    async.complete();
+                }))
+                .subscribe();
+    }
+
 }

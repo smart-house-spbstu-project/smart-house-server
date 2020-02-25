@@ -111,6 +111,7 @@ public class DevicePool implements Device {
     }
 
     removeDevices(removeArray);
+
     if (objectSingle == null) {
       objectSingle = Single.just(new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.OK));
     }
