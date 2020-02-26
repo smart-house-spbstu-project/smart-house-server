@@ -47,8 +47,8 @@ public class Helpers {
             JsonObject message = new JsonObject()
                     .put(MESSAGE_KEY, internalResponse.getString(MESSAGE_KEY));
             makeRestResponse(context,
-                             internalResponse.getInteger(EXTERNAL_STATUS_KEY, StatusCode.ERROR.getStatusCode()),
-                             message);
+                    internalResponse.getInteger(EXTERNAL_STATUS_KEY, StatusCode.ERROR.getStatusCode()),
+                    message);
         }
     }
 
@@ -60,7 +60,7 @@ public class Helpers {
         response.remove(INTERNAL_STATUS_KEY);
         int statusKey = response.getInteger(EXTERNAL_STATUS_KEY);
         response.remove(EXTERNAL_STATUS_KEY);
-        makeRestResponse(context, statusKey, response);
+        makeRestResponse(context, statusKey, response.isEmpty() ? null : response);
     }
 
     public static void makeErrorRestResponse(RoutingContext context, StatusCode code, Object message) {

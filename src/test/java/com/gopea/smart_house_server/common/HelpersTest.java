@@ -159,7 +159,7 @@ public class HelpersTest {
 
         Helpers.makeRestResponseFromResponse(context, response);
 
-        verify(httpResponse).end(any(Buffer.class));
+        verify(httpResponse).end();
         verify(httpResponse).setStatusCode(anyInt());
         assertTrue(isSameCode.get());
     }

@@ -9,14 +9,14 @@ import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
 
-public class StaticContentRouterTest {
+public class HelloRouterTest {
 
     @Test(timeout = 60_000L)
     public void testLoadRouter() {
-        Router target = new StaticContentRouter().loadRouter(Vertx.vertx());
+        Router target = new HelloRouter().loadRouter(Vertx.vertx());
 
         List<Route> list = target.getRoutes();
         assertEquals(1, list.size());
-        assertEquals("/info/",list.get(0).getPath());
+        assertEquals("/rest", list.get(0).getPath());
     }
 }
