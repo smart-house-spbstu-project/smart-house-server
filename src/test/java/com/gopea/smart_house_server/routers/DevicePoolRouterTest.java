@@ -26,6 +26,7 @@ import org.junit.runner.RunWith;
 import java.util.List;
 
 import static com.gopea.smart_house_server.common.Helpers.USER_TYPE_HEADER;
+import static com.gopea.smart_house_server.data_base.Storages.ID;
 import static com.gopea.smart_house_server.devices.Devices.DEVICE_TYPE_KEY;
 import static com.gopea.smart_house_server.routers.DevicePoolRouter.DEVICES_KEY;
 import static junit.framework.TestCase.assertEquals;
@@ -194,7 +195,10 @@ public class DevicePoolRouterTest {
         DevicePoolRouter target = new DevicePoolRouter();
 
         Storages.DEVICE_STORAGE.addDevice(new Lamp(BASE_OBJECT))
-                .flatMapCompletable(ign -> target.handleDeleteRequest(routingContext))
+                .flatMapCompletable(response -> {
+                    when(routingContext.request().getParam("id")).thenReturn(response.getString(ID));
+                    return target.handleDeleteRequest(routingContext);
+                })
                 .andThen(Completable.fromAction(() -> {
                     verify(routingContext.response()).setStatusCode(StatusCode.NO_CONTENT.getStatusCode());
                     verify(routingContext.response()).end();

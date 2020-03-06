@@ -29,7 +29,7 @@ public abstract class BaseDevice implements Device {
   public static final String STATUS_KEY = "status";
   private long prevTime;
 
-  public static <T extends BaseDevice>T getInstance(Class<T> clazz, JsonObject object) throws Exception {
+  public static <T extends BaseDevice> T getInstance(Class<T> clazz, JsonObject object) throws Exception {
     Constructor<T> constructor = clazz.getConstructor(JsonObject.class);
     return constructor.newInstance(object);
   }
@@ -125,6 +125,14 @@ public abstract class BaseDevice implements Device {
   @Override
   public Single<JsonObject> update(JsonObject object) {
     Integer updateTimeParam = object.getInteger(UPDATE_TIME_KEY);
+    if (updateTimeParam == null) {
+      return Single.just(
+          new JsonObject()
+              .put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
+              .put(EXTERNAL_STATUS_KEY, StatusCode.UNPROCESSABLE_ENTITY.getStatusCode())
+              .put("message", "You should update something")
+      );
+    }
     setUpdateTime(updateTimeParam);
     return Single.just(
         new JsonObject()
