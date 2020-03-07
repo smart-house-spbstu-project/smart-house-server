@@ -202,7 +202,7 @@ public class DevicePool implements Device {
     for (int i = 0; i < array.size(); i++) {
       if (!(array.getValue(i) instanceof String)) {
         return createResponseJson(InternalStatus.FAILED,
-            StatusCode.BAD_REQUEST,
+            StatusCode.UNPROCESSABLE_ENTITY,
             new JsonObject().put(MESSAGE_KEY, "id should have String type"));
       }
       String id = array.getString(i);
@@ -264,7 +264,7 @@ public class DevicePool implements Device {
       JsonObject object = new JsonObject();
       DEVICE_STORAGE.getDevice(id)
           .map(device -> {
-            devices.add(new ImmutablePair<String, Device>(id, device));
+            devices.add(new ImmutablePair<>(id, device));
             return new JsonObject().put(INTERNAL_STATUS_KEY, InternalStatus.OK);
           })
           .doOnSuccess(object::mergeIn)
