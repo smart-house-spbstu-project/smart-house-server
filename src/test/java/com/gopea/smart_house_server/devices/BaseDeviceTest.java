@@ -6,9 +6,12 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.reactivex.core.Vertx;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static com.gopea.smart_house_server.TestHelpers.deleteDeviceFiles;
 import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 import static com.gopea.smart_house_server.devices.BaseDevice.UPDATE_TIME_KEY;
@@ -22,6 +25,16 @@ public class BaseDeviceTest {
     private static final JsonObject BASE_OBJECT = new JsonObject()
             .put("host", HOST)
             .put("port", PORT);
+
+    @After
+    public void after(TestContext context){
+      Vertx vertx = Vertx.vertx();
+      final Async async = context.async();
+      deleteDeviceFiles(vertx)
+          .andThen(vertx.rxClose())
+          .andThen(Completable.fromAction(async::complete))
+          .subscribe();
+    }
 
     @Test
     public void testGetInstance() throws Exception {

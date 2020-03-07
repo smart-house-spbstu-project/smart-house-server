@@ -29,6 +29,7 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 
+import static com.gopea.smart_house_server.TestHelpers.deleteDeviceFiles;
 import static com.gopea.smart_house_server.common.Helpers.USER_TYPE_HEADER;
 import static com.gopea.smart_house_server.connectors.Connectors.COMMAND_ACTION_KEY;
 import static com.gopea.smart_house_server.data_base.Storages.ID;
@@ -66,9 +67,10 @@ public class DeviceRouterTest {
             Flowable.fromIterable(list)
                 .flatMapSingle(pair -> Storages.DEVICE_STORAGE.deleteDevice(pair.getKey()))
                 .ignoreElements())
+        .andThen(deleteDeviceFiles(vertx))
+        .andThen(vertx.rxClose())
         .andThen(Completable.fromAction(async::complete))
         .subscribe();
-    vertx.close();
   }
 
 

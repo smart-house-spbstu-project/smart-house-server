@@ -5,6 +5,7 @@ import com.gopea.smart_house_server.configs.StatusCode;
 import com.gopea.smart_house_server.routers.users.User;
 import com.gopea.smart_house_server.routers.users.UserType;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -19,6 +20,7 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 
+import static com.gopea.smart_house_server.TestHelpers.deleteDeviceFiles;
 import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 import static com.gopea.smart_house_server.data_base.FileUserStorage.USERS_KEY;
@@ -48,10 +50,10 @@ public class FileUserStorageTest {
     final Async async = context.async();
 
     vertx.fileSystem().rxDelete(path)
+        .andThen(deleteDeviceFiles(vertx))
+        .andThen(vertx.rxClose())
         .andThen(Completable.fromAction(async::complete))
         .subscribe();
-
-    vertx.close(context.asyncAssertSuccess());
   }
 
   @Test(timeout = 60000)

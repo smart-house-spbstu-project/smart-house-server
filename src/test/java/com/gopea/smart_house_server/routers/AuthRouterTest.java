@@ -40,144 +40,143 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(VertxUnitRunner.class)
 public class AuthRouterTest {
 
-    private Vertx vertx;
+  private Vertx vertx;
 
-    @Before
-    public void before(TestContext context) {
-        final Async async = context.async();
-        vertx = Vertx.vertx();
-        vertx.fileSystem()
-                .rxWriteFile(PASSWORDS_FILE, Buffer.newInstance(new JsonObject().put(USERS_KEY, new JsonObject()).toBuffer()))
-                .andThen(Completable.fromAction(async::complete))
-                .subscribe();
-    }
+  @Before
+  public void before(TestContext context) {
+    final Async async = context.async();
+    vertx = Vertx.vertx();
+    vertx.fileSystem()
+        .rxWriteFile(PASSWORDS_FILE, Buffer.newInstance(new JsonObject().put(USERS_KEY, new JsonObject()).toBuffer()))
+        .andThen(Completable.fromAction(async::complete))
+        .subscribe();
+  }
 
-    @After
-    public void after(TestContext context) {
-        final Async async = context.async();
+  @After
+  public void after(TestContext context) {
+    final Async async = context.async();
 
-        vertx.fileSystem()
-                .rxDelete(PASSWORDS_FILE)
-                .andThen(Completable.fromAction(async::complete))
-                .subscribe();
+    vertx.fileSystem()
+        .rxDelete(PASSWORDS_FILE)
+        .andThen(vertx.rxClose())
+        .andThen(Completable.fromAction(async::complete))
+        .subscribe();
+  }
 
-        vertx.close();
-    }
+  @Test(timeout = 60_000L)
+  public void testLoadRouter() {
+    Router target = new AuthRouter().loadRouter(Vertx.vertx());
 
-    @Test(timeout = 60_000L)
-    public void testLoadRouter() {
-        Router target = new AuthRouter().loadRouter(Vertx.vertx());
+    List<Route> list = target.getRoutes();
+    assertEquals(1, list.size());
+    assertEquals("/", list.get(0).getPath());
+  }
 
-        List<Route> list = target.getRoutes();
-        assertEquals(1, list.size());
-        assertEquals("/", list.get(0).getPath());
-    }
+  @Test(timeout = 60_000L)
+  public void testEmptyAuthHeader(TestContext context) {
+    final Async async = context.async();
 
-    @Test(timeout = 60_000L)
-    public void testEmptyAuthHeader(TestContext context) {
-        final Async async = context.async();
+    AuthRouter target = new AuthRouter();
 
-        AuthRouter target = new AuthRouter();
+    RoutingContext routingContext = createContext();
 
-        RoutingContext routingContext = createContext();
+    when(routingContext.request().getHeader(AUTH_HEADER)).thenReturn("");
 
-        when(routingContext.request().getHeader(AUTH_HEADER)).thenReturn("");
+    target.handleRequest(routingContext)
+        .andThen(Completable.fromAction(() -> {
+          verify(routingContext).fail(StatusCode.UNAUTHORISED.getStatusCode());
+          async.complete();
+        }))
+        .subscribe();
+  }
 
-        target.handleRequest(routingContext)
-                .andThen(Completable.fromAction(() -> {
-                    verify(routingContext).fail(StatusCode.UNAUTHORISED.getStatusCode());
-                    async.complete();
-                }))
-                .subscribe();
-    }
+  @Test(timeout = 60_000L)
+  public void testInvalidAuthHeader(TestContext context) {
+    final Async async = context.async();
 
-    @Test(timeout = 60_000L)
-    public void testInvalidAuthHeader(TestContext context) {
-        final Async async = context.async();
+    AuthRouter target = new AuthRouter();
 
-        AuthRouter target = new AuthRouter();
+    RoutingContext routingContext = createContext();
 
-        RoutingContext routingContext = createContext();
+    when(routingContext.request().getHeader(AUTH_HEADER)).thenReturn("Basic :");
 
-        when(routingContext.request().getHeader(AUTH_HEADER)).thenReturn("Basic :");
+    target.handleRequest(routingContext)
+        .andThen(Completable.fromAction(() -> {
+          verify(routingContext).fail(StatusCode.UNAUTHORISED.getStatusCode());
+          async.complete();
+        }))
+        .subscribe();
+  }
 
-        target.handleRequest(routingContext)
-                .andThen(Completable.fromAction(() -> {
-                    verify(routingContext).fail(StatusCode.UNAUTHORISED.getStatusCode());
-                    async.complete();
-                }))
-                .subscribe();
-    }
+  @Test(timeout = 60_000L)
+  public void testNotExistsUser(TestContext context) {
+    final Async async = context.async();
 
-    @Test(timeout = 60_000L)
-    public void testNotExistsUser(TestContext context) {
-        final Async async = context.async();
+    AuthRouter target = new AuthRouter();
 
-        AuthRouter target = new AuthRouter();
+    RoutingContext routingContext = createContext();
 
-        RoutingContext routingContext = createContext();
+    when(routingContext.request().getHeader(AUTH_HEADER)).thenReturn(String.format("Basic %s", Base64.getEncoder().encodeToString("test:password".getBytes())));
 
-        when(routingContext.request().getHeader(AUTH_HEADER)).thenReturn(String.format("Basic %s", Base64.getEncoder().encodeToString("test:password".getBytes())));
+    target.handleRequest(routingContext)
+        .andThen(Completable.fromAction(() -> {
+          verify(routingContext).fail(StatusCode.UNAUTHORISED.getStatusCode());
+          async.complete();
+        }))
+        .subscribe();
+  }
 
-        target.handleRequest(routingContext)
-                .andThen(Completable.fromAction(() -> {
-                    verify(routingContext).fail(StatusCode.UNAUTHORISED.getStatusCode());
-                    async.complete();
-                }))
-                .subscribe();
-    }
+  @Test(timeout = 60_000L)
+  public void testAuthorisedFail(TestContext context) {
+    final Async async = context.async();
 
-    @Test(timeout = 60_000L)
-    public void testAuthorisedFail(TestContext context) {
-        final Async async = context.async();
+    AuthRouter target = new AuthRouter();
 
-        AuthRouter target = new AuthRouter();
+    RoutingContext routingContext = createContext();
 
-        RoutingContext routingContext = createContext();
+    User user = new User("test", UserType.ADMIN, "password");
 
-        User user = new User("test", UserType.ADMIN, "password");
+    when(routingContext.request().getHeader(AUTH_HEADER)).thenReturn(String.format("Basic %s", Base64.getEncoder().encodeToString("test:password1".getBytes())));
+    MultiMap map = mock(MultiMap.class);
 
-        when(routingContext.request().getHeader(AUTH_HEADER)).thenReturn(String.format("Basic %s", Base64.getEncoder().encodeToString("test:password1".getBytes())));
-        MultiMap map = mock(MultiMap.class);
-
-        when(map.add(any(String.class), any(String.class))).thenReturn(map);
-        when(routingContext.request().headers()).thenReturn(map);
-
-
-        Storages.USER_STORAGE.addUser(user)
-                .flatMapCompletable(ign -> target.handleRequest(routingContext))
-                .andThen(Completable.fromAction(() -> {
-                    verify(routingContext).fail(StatusCode.UNAUTHORISED.getStatusCode());
-                    async.complete();
-                }))
-                .subscribe();
-    }
-
-    @Test(timeout = 60_000L)
-    public void testAuthorisedSuccess(TestContext context) {
-        final Async async = context.async();
-
-        AuthRouter target = new AuthRouter();
-
-        RoutingContext routingContext = createContext();
-
-        User user = new User("test", UserType.ADMIN, "password");
-
-        when(routingContext.request().getHeader(AUTH_HEADER)).thenReturn(String.format("Basic %s", Base64.getEncoder().encodeToString("test:password".getBytes())));
-        MultiMap map = mock(MultiMap.class);
-
-        when(map.add(any(String.class), any(String.class))).thenReturn(map);
-        when(routingContext.request().headers()).thenReturn(map);
+    when(map.add(any(String.class), any(String.class))).thenReturn(map);
+    when(routingContext.request().headers()).thenReturn(map);
 
 
-        Storages.USER_STORAGE.addUser(user)
-                .flatMapCompletable(ign -> target.handleRequest(routingContext))
-                .andThen(Completable.fromAction(() -> {
-                    verify(routingContext.request().headers()).add(USERNAME_HEADER, user.getUsername());
-                    verify(routingContext.request().headers()).add(USER_TYPE_HEADER, user.getUserType().toString().toLowerCase());
-                    async.complete();
-                }))
-                .subscribe();
-    }
+    Storages.USER_STORAGE.addUser(user)
+        .flatMapCompletable(ign -> target.handleRequest(routingContext))
+        .andThen(Completable.fromAction(() -> {
+          verify(routingContext).fail(StatusCode.UNAUTHORISED.getStatusCode());
+          async.complete();
+        }))
+        .subscribe();
+  }
+
+  @Test(timeout = 60_000L)
+  public void testAuthorisedSuccess(TestContext context) {
+    final Async async = context.async();
+
+    AuthRouter target = new AuthRouter();
+
+    RoutingContext routingContext = createContext();
+
+    User user = new User("test", UserType.ADMIN, "password");
+
+    when(routingContext.request().getHeader(AUTH_HEADER)).thenReturn(String.format("Basic %s", Base64.getEncoder().encodeToString("test:password".getBytes())));
+    MultiMap map = mock(MultiMap.class);
+
+    when(map.add(any(String.class), any(String.class))).thenReturn(map);
+    when(routingContext.request().headers()).thenReturn(map);
+
+
+    Storages.USER_STORAGE.addUser(user)
+        .flatMapCompletable(ign -> target.handleRequest(routingContext))
+        .andThen(Completable.fromAction(() -> {
+          verify(routingContext.request().headers()).add(USERNAME_HEADER, user.getUsername());
+          verify(routingContext.request().headers()).add(USER_TYPE_HEADER, user.getUserType().toString().toLowerCase());
+          async.complete();
+        }))
+        .subscribe();
+  }
 
 }

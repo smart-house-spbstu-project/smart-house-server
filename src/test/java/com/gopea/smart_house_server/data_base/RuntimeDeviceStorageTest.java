@@ -11,15 +11,28 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.reactivex.core.Vertx;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static com.gopea.smart_house_server.TestHelpers.deleteDeviceFiles;
 import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 
 @RunWith(VertxUnitRunner.class)
 public class RuntimeDeviceStorageTest {
+
+  @After
+  public void after(TestContext context) {
+    Vertx vertx = Vertx.vertx();
+    final Async async = context.async();
+    deleteDeviceFiles(vertx)
+        .andThen(vertx.rxClose())
+        .andThen(Completable.fromAction(async::complete))
+        .subscribe();
+  }
 
   @Test(timeout = 60000)
   public void testAddStorage(TestContext context) {

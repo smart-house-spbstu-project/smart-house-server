@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.gopea.smart_house_server.TestHelpers.deleteDeviceFiles;
 import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 import static com.gopea.smart_house_server.connectors.Connectors.COMMAND_ACTION_KEY;
@@ -57,8 +58,12 @@ public class DevicePoolTest {
   }
 
   @After
-  public void after() {
-    vertx.close();
+  public void after(TestContext context) {
+    final Async async = context.async();
+    deleteDeviceFiles(vertx)
+        .andThen(vertx.rxClose())
+        .andThen(Completable.fromAction(async::complete))
+        .subscribe();
   }
 
   @Test

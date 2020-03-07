@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 
+import static com.gopea.smart_house_server.TestHelpers.deleteDeviceFiles;
 import static com.gopea.smart_house_server.common.Helpers.USER_TYPE_HEADER;
 import static com.gopea.smart_house_server.data_base.Storages.ID;
 import static com.gopea.smart_house_server.devices.Devices.DEVICE_TYPE_KEY;
@@ -51,9 +52,12 @@ public class DevicePoolRouterTest {
     }
 
     @After
-    public void after() {
-
-        vertx.close();
+    public void after(TestContext context) {
+      final Async async = context.async();
+      deleteDeviceFiles(vertx)
+          .andThen(vertx.rxClose())
+          .andThen(Completable.fromAction(async::complete))
+          .subscribe();
     }
 
     @Test(timeout = 60_000L)

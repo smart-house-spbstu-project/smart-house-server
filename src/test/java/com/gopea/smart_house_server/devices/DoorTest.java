@@ -10,11 +10,14 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.reactivex.core.Vertx;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static com.gopea.smart_house_server.TestHelpers.deleteDeviceFiles;
 import static com.gopea.smart_house_server.common.Helpers.EXTERNAL_STATUS_KEY;
 import static com.gopea.smart_house_server.common.Helpers.isInternalStatusOk;
 import static com.gopea.smart_house_server.connectors.Connectors.COMMAND_ACTION_KEY;
@@ -25,39 +28,48 @@ import static junit.framework.TestCase.assertEquals;
 
 @RunWith(VertxUnitRunner.class)
 public class DoorTest {
-    private static final String HOST = "host_val";
-    private static final int PORT = 80;
-    private static final JsonObject BASE_OBJECT = new JsonObject()
-            .put("host", HOST)
-            .put("port", PORT);
+  private static final String HOST = "host_val";
+  private static final int PORT = 80;
+  private static final JsonObject BASE_OBJECT = new JsonObject()
+      .put("host", HOST)
+      .put("port", PORT);
 
 
-    @Test
-    public void testGetType() {
-        Door target = new Door(BASE_OBJECT);
-        assertEquals(DeviceType.DOOR, target.getType());
+  @After
+  public void after(TestContext context) {
+    Vertx vertx = Vertx.vertx();
+    final Async async = context.async();
+    deleteDeviceFiles(vertx)
+        .andThen(vertx.rxClose())
+        .andThen(Completable.fromAction(async::complete))
+        .subscribe();
+  }
+
+  @Test
+  public void testGetType() {
+    Door target = new Door(BASE_OBJECT);
+    assertEquals(DeviceType.DOOR, target.getType());
+  }
+
+  @Test
+  public void testGetConnector() {
+    TestClass target = new TestClass();
+
+    Connector result = target.get();
+
+    assertEquals(PORT, result.getPort());
+    assertEquals(HOST, result.getHost());
+  }
+
+
+  private static class TestClass extends Door {
+
+    public TestClass() {
+      super(BASE_OBJECT);
     }
 
-    @Test
-    public void testGetConnector() {
-        TestClass target = new TestClass();
-
-        Connector result = target.get();
-
-        assertEquals(PORT, result.getPort());
-        assertEquals(HOST, result.getHost());
+    public Connector get() {
+      return super.getConnector(HOST, PORT);
     }
-
-
-
-    private static class TestClass extends Door {
-
-        public TestClass() {
-            super(BASE_OBJECT);
-        }
-
-        public Connector get() {
-            return super.getConnector(HOST, PORT);
-        }
-    }
+  }
 }
