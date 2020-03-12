@@ -224,6 +224,28 @@ public class DeviceRouterTest {
   }
 
   @Test(timeout = 60_000L)
+  public void testPostRequestWithIncorrectDevicePropertiesMoreThan7Days(TestContext context) {
+    RoutingContext routingContext = createContext();
+
+    final Async async = context.async();
+
+    when(routingContext.request().getHeader(USER_TYPE_HEADER)).thenReturn(UserType.ADMIN.toString());
+    when(routingContext.getBodyAsJson()).thenReturn(new JsonObject()
+        .put(DEVICE_TYPE_KEY, DeviceType.DOOR.toString())
+        .put(DEVICE_PROPERTIES_KEY, new JsonObject().put(UPDATE_TIME_KEY, 7 * 24 * 60 * 60 + 1)));
+
+    DeviceRouter target = new DeviceRouter();
+    target.handlePostRequest(routingContext)
+        .andThen(Completable.fromAction(() -> {
+          verify(routingContext.response()).setStatusCode(StatusCode.BAD_REQUEST.getStatusCode());
+          verify(routingContext.response()).end(any(Buffer.class));
+          async.complete();
+        }))
+        .subscribe();
+
+  }
+
+  @Test(timeout = 60_000L)
   public void testPostRequestWithIncorrectDevicePropertiesNegative(TestContext context) {
     RoutingContext routingContext = createContext();
 

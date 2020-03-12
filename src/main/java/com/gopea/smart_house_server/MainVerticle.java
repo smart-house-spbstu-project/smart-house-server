@@ -21,6 +21,7 @@ public class MainVerticle extends AbstractVerticle {
             .createHttpServer()
             .requestHandler(router)
             .rxListen(HTTP_PORT))
-        .subscribe(httpServer -> startFuture.complete(), startFuture::fail);
+        .doOnError(startFuture::fail)
+        .subscribe();
   }
 }

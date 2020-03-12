@@ -1,3 +1,6 @@
 /target/
 /smart-house-server.iml
-/.idea/
+.idea/
+test/.idea/
+test/e2e/__pycache__/
+test/e2e/common/__pycache__/

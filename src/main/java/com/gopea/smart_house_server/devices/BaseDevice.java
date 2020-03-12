@@ -108,7 +108,8 @@ public abstract class BaseDevice implements Device {
    * @return This, so the API can be used fluently.
    */
   public BaseDevice setUpdateTime(int updateTime) {
-    this.updateTime = updateTime;
+    if (updateTime >= 0 && updateTime <= 7 * 24 * 60 * 60)
+      this.updateTime = updateTime;
     return this;
   }
 
@@ -132,6 +133,13 @@ public abstract class BaseDevice implements Device {
               .put(EXTERNAL_STATUS_KEY, StatusCode.UNPROCESSABLE_ENTITY.getStatusCode())
               .put("message", "You should update something")
       );
+    }
+    if (updateTimeParam < 0 || updateTimeParam > 7 * 24 * 60 * 60) {
+      return Single.just(
+          new JsonObject()
+              .put(INTERNAL_STATUS_KEY, InternalStatus.FAILED)
+              .put(EXTERNAL_STATUS_KEY, StatusCode.BAD_REQUEST.getStatusCode())
+              .put("message", "You couldn't set update_time less than 0 or more than 7 days"));
     }
     setUpdateTime(updateTimeParam);
     return Single.just(

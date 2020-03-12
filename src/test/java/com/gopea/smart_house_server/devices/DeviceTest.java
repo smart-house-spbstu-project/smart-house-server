@@ -265,4 +265,38 @@ public class DeviceTest {
         }))
         .subscribe();
   }
+
+  @Test(timeout = 60000)
+  public void testUpdateLessThanZero(TestContext context) {
+    final Async async = context.async();
+
+    final JsonObject command = new JsonObject()
+        .put(UPDATE_TIME_KEY, -1);
+
+    device.connect()
+        .flatMap(ign -> device.update(command))
+        .flatMapCompletable(response -> Completable.fromAction(() -> {
+          context.assertFalse(isInternalStatusOk(response));
+          context.assertEquals(StatusCode.BAD_REQUEST.getStatusCode(), response.getInteger(EXTERNAL_STATUS_KEY));
+          async.complete();
+        }))
+        .subscribe();
+  }
+
+  @Test(timeout = 60000)
+  public void testUpdateLessMoreThan7Days(TestContext context) {
+    final Async async = context.async();
+
+    final JsonObject command = new JsonObject()
+        .put(UPDATE_TIME_KEY, 7 * 24 * 60 * 60 + 1);
+
+    device.connect()
+        .flatMap(ign -> device.update(command))
+        .flatMapCompletable(response -> Completable.fromAction(() -> {
+          context.assertFalse(isInternalStatusOk(response));
+          context.assertEquals(StatusCode.BAD_REQUEST.getStatusCode(), response.getInteger(EXTERNAL_STATUS_KEY));
+          async.complete();
+        }))
+        .subscribe();
+  }
 }

@@ -70,10 +70,13 @@ public class DeviceRouter implements Routable {
       return Completable.complete();
     }
 
+
     DeviceType deviceType = DeviceType.getEnum(body.getString(DEVICE_TYPE_KEY));
     BaseDevice device = null;
+    JsonObject device_props = body.getJsonObject(DEVICE_PROPERTIES_KEY);
+
     try {
-      device = BaseDevice.getInstance(deviceType.getClazz(), body.getJsonObject(DEVICE_PROPERTIES_KEY));
+      device = BaseDevice.getInstance(deviceType.getClazz(), device_props);
     } catch (Exception e) {
       handleError(ctx, e);
       return Completable.complete();
@@ -336,8 +339,8 @@ public class DeviceRouter implements Routable {
 
     if (deviceProp.getValue(UPDATE_TIME_KEY) != null) {
       Object updateTimeObj = deviceProp.getValue(UPDATE_TIME_KEY);
-      if (!(updateTimeObj instanceof Integer) || ((int) updateTimeObj) < 0) {
-        makeErrorRestResponse(context, StatusCode.BAD_REQUEST, String.format("%s should be a non negative int", UPDATE_TIME_KEY));
+      if (!(updateTimeObj instanceof Integer) || ((int) updateTimeObj) < 0 || ((int) updateTimeObj) > 604800) {
+        makeErrorRestResponse(context, StatusCode.BAD_REQUEST, String.format("%s should be a non negative int, not more than 604800", UPDATE_TIME_KEY));
         return false;
       }
     }

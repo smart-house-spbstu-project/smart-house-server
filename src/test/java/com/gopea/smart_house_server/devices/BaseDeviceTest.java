@@ -79,6 +79,30 @@ public class BaseDeviceTest {
 
     }
 
+  @Test(timeout = 60000)
+  public void testSetUpdateTimeLessThanZero() {
+
+    final JsonObject command = new JsonObject()
+        .put(UPDATE_TIME_KEY, -1);
+
+    BaseDevice door = new Door(BASE_OBJECT);
+    door.setUpdateTime(-1);
+    assertEquals(0, door.getUpdateTime());
+
+  }
+
+  @Test(timeout = 60000)
+  public void testSetUpdateTimeMoreThan7Days() {
+
+    final JsonObject command = new JsonObject()
+        .put(UPDATE_TIME_KEY, 7*24*60*60+1);
+
+    BaseDevice door = new Door(BASE_OBJECT);
+    door.setUpdateTime(7*24*60*60+1);
+    assertEquals(0, door.getUpdateTime());
+
+  }
+
     @Test(timeout = 180_000)
     public void testMetricsMaxSize(TestContext context) {
         final Async async = context.async();
