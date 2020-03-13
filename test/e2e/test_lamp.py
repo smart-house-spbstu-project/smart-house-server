@@ -90,3 +90,39 @@ class TestLamp:
 
     def test_delete_unexists(self):
         delete_device("88888", expected_status_code=404)
+
+    def test_connect(self):
+        standard_test_connect_device(TestLamp.standard_data)
+
+    def test_disconnect(self):
+        standard_test_disconnect_device(TestLamp.standard_data)
+
+    def test_reboot(self):
+        standard_test_reboot_device(TestLamp.standard_data)
+
+    def test_reboot_after_disconnect(self):
+        device_id = create_device(TestLamp.standard_data)
+        disconnect_device(device_id)
+        reboot_device(device_id, expected_status_code=503)
+
+    def test_power_off(self):
+        standard_test_power_off_device(TestLamp.standard_data)
+
+    def test_power_off_after_disconnect(self):
+        device_id = create_device(TestLamp.standard_data)
+        disconnect_device(device_id)
+        power_off_device(device_id, expected_status_code=503)
+
+    def test_execute_on(self):
+        command = {
+            "state": "on"
+        }
+        standard_execute_action_device(TestLamp.standard_data, command, check_execute("on"))
+
+    def test_execute_off(self):
+        command = {
+            "state": "off"
+        }
+        standard_execute_action_device(TestLamp.standard_data, command, check_execute("off"))
+    def test_metrics(self):
+        standard_metrics_test(TestLamp.standard_data)
