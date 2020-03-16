@@ -7,8 +7,8 @@ import json
 DEVICE_URL = BASE_URL + "/device"
 
 
-def create_device(request_data, expected_status_code=201):
-    response = requests.post(DEVICE_URL, json=request_data, verify=False, auth=AUTH)
+def create_device(request_data, device_url=DEVICE_URL, expected_status_code=201):
+    response = requests.post(device_url, json=request_data, verify=False, auth=AUTH)
 
     assert response.status_code == expected_status_code, response.json()
 
